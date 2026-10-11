@@ -57,8 +57,8 @@ export function Rules(p: { hard: boolean; onClose: () => void }) {
             as pistas juntas.
           </li>
           <li>
-            Cada jogador tem uma pista secreta{" "}
-            {p.hard ? "(no difícil, pode ser negativa: “NÃO está…”)" : ""}. Preparação: cada um
+            Cada jogador tem uma pista secreta
+            {p.hard ? " (no difícil, pode ser negativa: “NÃO está…”)" : ""}. Preparação: cada um
             coloca 2 cubos em hexes que a própria pista rejeita.
           </li>
           <li>
