@@ -27,6 +27,7 @@ html,
 body {
   margin: 0;
   min-height: 100%;
+  overflow-x: hidden;
 }
 body {
   background: linear-gradient(
@@ -882,10 +883,12 @@ input::placeholder {
 @keyframes pulse-bg {
   0%,
   100% {
-    transform: translateX(0);
+    box-shadow: 0 3px 0 var(--sea-deep);
   }
   50% {
-    transform: translateX(3px);
+    box-shadow:
+      0 3px 0 var(--sea-deep),
+      0 0 0 4px rgba(46, 196, 182, 0.35);
   }
 }
 @keyframes slide-in {
