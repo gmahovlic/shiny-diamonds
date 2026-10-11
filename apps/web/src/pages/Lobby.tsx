@@ -187,13 +187,11 @@ export function Lobby(p: { room: RoomView; tv?: boolean }) {
           {t("lobby.waiting")} {r.settings.hard && <span class="chip">{t("lobby.hardChip")}</span>}
         </p>
       )}
-      {!p.tv && (
-        <p class="center-row">
-          <button type="button" class="btn ghost" onClick={() => navigate("/")}>
-            {t("lobby.leave")}
-          </button>
-        </p>
-      )}
+      <p class="center-row">
+        <button type="button" class="btn ghost" onClick={() => navigate("/")}>
+          {t("lobby.leave")}
+        </button>
+      </p>
     </main>
   );
 }

@@ -3,7 +3,7 @@ import { cellLabel, HexMap } from "../components/HexMap";
 import { Qr } from "../components/Qr";
 import { Seats } from "../components/Seats";
 import { clueText, describeEvents, t } from "../i18n";
-import { playerUrl } from "../router";
+import { navigate, playerUrl } from "../router";
 import { lastEvents } from "../store";
 import { seatColor } from "../strings";
 
@@ -54,6 +54,11 @@ export function TvGame(p: { room: RoomView; game: GameView }) {
             <span>{t("tv.scan")}</span>
           </div>
         )}
+        <p class="center-row">
+          <button type="button" class="btn ghost" onClick={() => navigate("/")}>
+            {t("lobby.leave")}
+          </button>
+        </p>
       </aside>
     </main>
   );
