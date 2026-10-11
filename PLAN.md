@@ -256,7 +256,11 @@ monsterous/
 3. **Web** ✅ — lobby (criar/entrar/QR), tela do jogador (mapa SVG interativo, pista,
    perguntar/procurar, cubos, anotações, dedução assistida), tela da TV, reveal,
    reconexão, animações, PWA básico. ~25 KB gzip de JS. i18n fica pra fase 4.
-4. **Polish** — arte própria, PWA, sons, dificuldades, analytics, teste em TV de verdade.
+4. **Polish** ✅ — arte própria, i18n pt-BR/en (auto + toggle), erros por código traduzidos,
+   recusa de entrada com motivo (sala cheia / já começou / não existe), sons sintetizados
+   (WebAudio, sem assets, mudo por padrão), PWA com service worker (app shell + fontes;
+   nunca cacheia /api), compartilhar link, renomear, sair da sala, analytics opcional
+   via `VITE_CF_ANALYTICS_TOKEN`. Falta: teste em TV de verdade (manual).
 5. **Depois** — contas (D1), ads, remover ads (Stripe), stats.
 
 ---

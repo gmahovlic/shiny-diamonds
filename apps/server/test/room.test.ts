@@ -64,7 +64,8 @@ describe("lobby", () => {
     const room = makeRoom();
     const a = join(room, "Ana");
     expect(errors(room.handle(a.id, { t: "start" }, 1).outbound)[0]).toMatchObject({
-      message: expect.stringContaining("need 2"),
+      code: "need_players",
+      params: { min: 2, max: 5, have: 1 },
     });
     for (let i = 0; i < 4; i++) room.handle(a.id, { t: "addBot" }, 1);
     expect(errors(room.handle(a.id, { t: "addBot" }, 1).outbound).length).toBe(1);
@@ -134,7 +135,7 @@ describe("game", () => {
       { t: "action", action: { type: "placeCube", seat: 0, cell: 0 } },
       3,
     );
-    expect(errors(fromTv.outbound)[0]).toMatchObject({ message: "you are not seated" });
+    expect(errors(fromTv.outbound)[0]).toMatchObject({ code: "not_seated" });
   });
 
   it("schedules bots and plays a full game to the solution", () => {

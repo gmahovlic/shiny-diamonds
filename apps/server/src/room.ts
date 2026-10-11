@@ -10,6 +10,7 @@ import {
   type ClientMessage,
   type Clue,
   clueCountFor,
+  type ErrorCode,
   type GameEvent,
   type GameState,
   type GameView,
@@ -159,8 +160,9 @@ export class Room {
     return [{ to: "all", msg }];
   }
 
-  private error(to: string, message: string): StepResult {
-    return { outbound: [{ to, msg: { t: "error", message } }], botDueIn: null };
+  private error(to: string, code: ErrorCode, params?: Record<string, string | number>): StepResult {
+    const msg: ServerMessage = params ? { t: "error", code, params } : { t: "error", code };
+    return { outbound: [{ to, msg }], botDueIn: null };
   }
 
   private cluesFor(memberId: string): Outbound[] {
@@ -180,16 +182,15 @@ export class Room {
     name?: string | undefined;
     role: Role;
     now: number;
-  }): { ok: true; member: Member; outbound: Outbound[] } | { ok: false; reason: string } {
+  }): { ok: true; member: Member; outbound: Outbound[] } | { ok: false; reason: ErrorCode } {
     const s = this.state;
     s.lastActivity = opts.now;
     let member = opts.token ? s.members.find((m) => m.token === opts.token && !m.bot) : undefined;
 
     if (!member) {
       if (opts.role === "player") {
-        if (s.phase !== "lobby")
-          return { ok: false, reason: "game already started; join as display" };
-        if (this.playerCount() >= MAX_PLAYERS) return { ok: false, reason: "room is full" };
+        if (s.phase !== "lobby") return { ok: false, reason: "game_started" };
+        if (this.playerCount() >= MAX_PLAYERS) return { ok: false, reason: "room_full" };
       }
       const n = s.members.filter((m) => m.role === "player").length + 1;
       member = {
@@ -254,7 +255,7 @@ export class Room {
   handle(memberId: string, msg: ClientMessage, now: number): StepResult {
     const s = this.state;
     const me = s.members.find((m) => m.id === memberId);
-    if (!me) return this.error(memberId, "unknown member");
+    if (!me) return this.error(memberId, "unknown_member");
     s.lastActivity = now;
     const isHost = s.hostId === memberId;
 
@@ -263,15 +264,15 @@ export class Room {
         return { outbound: [{ to: memberId, msg: { t: "pong" } }], botDueIn: null };
 
       case "setName": {
-        if (s.phase !== "lobby") return this.error(memberId, "cannot rename during a game");
+        if (s.phase !== "lobby") return this.error(memberId, "rename_in_game");
         me.name = cleanName(msg.name, me.name);
         return { outbound: this.broadcast(), botDueIn: null };
       }
 
       case "addBot": {
-        if (!isHost) return this.error(memberId, "only the host can add bots");
-        if (s.phase !== "lobby") return this.error(memberId, "game already started");
-        if (this.playerCount() >= MAX_PLAYERS) return this.error(memberId, "room is full");
+        if (!isHost) return this.error(memberId, "host_only");
+        if (s.phase !== "lobby") return this.error(memberId, "game_started");
+        if (this.playerCount() >= MAX_PLAYERS) return this.error(memberId, "room_full");
         const n = s.members.filter((m) => m.bot).length + 1;
         s.members.push({
           id: this.randomId(),
@@ -286,33 +287,37 @@ export class Room {
       }
 
       case "removeMember": {
-        if (!isHost) return this.error(memberId, "only the host can remove members");
-        if (s.phase !== "lobby") return this.error(memberId, "game already started");
-        if (msg.id === memberId) return this.error(memberId, "host cannot remove themselves");
+        if (!isHost) return this.error(memberId, "host_only");
+        if (s.phase !== "lobby") return this.error(memberId, "game_started");
+        if (msg.id === memberId) return this.error(memberId, "host_self_remove");
         s.members = s.members.filter((m) => m.id !== msg.id);
         return { outbound: this.broadcast(), botDueIn: null };
       }
 
       case "settings": {
-        if (!isHost) return this.error(memberId, "only the host can change settings");
-        if (s.phase !== "lobby") return this.error(memberId, "game already started");
+        if (!isHost) return this.error(memberId, "host_only");
+        if (s.phase !== "lobby") return this.error(memberId, "game_started");
         if (typeof msg.hard === "boolean") s.settings.hard = msg.hard;
         if (msg.assist && ASSIST.includes(msg.assist)) s.settings.assist = msg.assist;
         return { outbound: this.broadcast(), botDueIn: null };
       }
 
       case "start": {
-        if (!isHost) return this.error(memberId, "only the host can start");
-        if (s.phase !== "lobby") return this.error(memberId, "game already started");
+        if (!isHost) return this.error(memberId, "host_only");
+        if (s.phase !== "lobby") return this.error(memberId, "game_started");
         const n = this.playerCount();
         if (n < MIN_PLAYERS || n > MAX_PLAYERS)
-          return this.error(memberId, `need ${MIN_PLAYERS}–${MAX_PLAYERS} players (have ${n})`);
+          return this.error(memberId, "need_players", {
+            min: MIN_PLAYERS,
+            max: MAX_PLAYERS,
+            have: n,
+          });
         return this.startGame(now);
       }
 
       case "rematch": {
-        if (!isHost) return this.error(memberId, "only the host can start a rematch");
-        if (s.phase !== "finished") return this.error(memberId, "game is not finished");
+        if (!isHost) return this.error(memberId, "host_only");
+        if (s.phase !== "finished") return this.error(memberId, "not_finished");
         s.phase = "lobby";
         s.game = null;
         s.puzzle = null;
@@ -325,16 +330,16 @@ export class Room {
       }
 
       case "action": {
-        if (s.phase !== "playing" || !s.game) return this.error(memberId, "no game in progress");
+        if (s.phase !== "playing" || !s.game) return this.error(memberId, "no_game");
         const seat = this.seatOf(memberId);
-        if (seat === null) return this.error(memberId, "you are not seated");
+        if (seat === null) return this.error(memberId, "not_seated");
         const action = msg.action;
         if (!action || typeof action !== "object" || action.seat !== seat)
-          return this.error(memberId, "action must be for your own seat");
+          return this.error(memberId, "own_seat_only");
         return this.applyAction(action, memberId, now);
       }
     }
-    return this.error(memberId, "unknown message");
+    return this.error(memberId, "malformed");
   }
 
   // ── Game flow ───────────────────────────────────────────────────────────
@@ -349,7 +354,7 @@ export class Room {
     const clueCount = clueCountFor(players.length);
     const seed = pickSeed(rng, clueCount, s.settings.hard);
     const puzzle = generate(seed, clueCount, s.settings.hard);
-    if (!puzzle) return this.error(s.hostId ?? "", "internal: bank seed failed");
+    if (!puzzle) return this.error(s.hostId ?? "", "internal");
 
     const seatOrder = rng.shuffle([...players]);
     s.puzzle = puzzle;
@@ -371,7 +376,7 @@ export class Room {
 
   private applyAction(action: Action, memberId: string | null, now: number): StepResult {
     const s = this.state;
-    if (!s.game) return this.error(memberId ?? "", "no game");
+    if (!s.game) return this.error(memberId ?? "", "no_game");
     const r = reduce(s.game, action, this.oracle());
     if (!r.ok) return this.error(memberId ?? "", r.error);
     s.game = r.state;

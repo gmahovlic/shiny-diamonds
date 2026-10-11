@@ -19,7 +19,12 @@ pnpm --filter @shiny/web build    # gera apps/web/dist, que o worker serve em pr
 ```
 
 Deploy: push na `main` roda lint/typecheck/test e faz `wrangler deploy` (secrets
-`CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` no GitHub).
+`CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` no GitHub). Analytics opcional:
+defina `VITE_CF_ANALYTICS_TOKEN` (variável de build) com o token do Cloudflare Web
+Analytics e o beacon entra no `index.html`.
+
+Idiomas: pt-BR e en (detecta pelo navegador, toggle na home). Strings em
+`apps/web/src/i18n.ts`.
 
 ## Estrutura
 

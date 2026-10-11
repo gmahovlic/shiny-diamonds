@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { lang, setLang, t } from "../i18n";
 import { createRoom, nameKey } from "../net";
 import { navigate } from "../router";
 import { showToast } from "../store";
@@ -39,46 +40,60 @@ export function Home() {
   const join = (e: Event) => {
     e.preventDefault();
     const c = code.trim().toUpperCase();
-    if (c.length !== 4) return showToast("o código tem 4 letras");
+    if (c.length !== 4) return showToast(t("home.codeLen"));
     keepName();
     navigate(`/p/${c}`);
   };
 
   return (
     <main class="home">
+      <div class="langbar">
+        <button
+          type="button"
+          class={`btn tiny ${lang.value === "pt" ? "primary" : ""}`}
+          onClick={() => setLang("pt")}
+        >
+          PT
+        </button>
+        <button
+          type="button"
+          class={`btn tiny ${lang.value === "en" ? "primary" : ""}`}
+          onClick={() => setLang("en")}
+        >
+          EN
+        </button>
+      </div>
       <h1 class="logo">
         <span class="gem">◆</span> Shiny Diamonds
       </h1>
-      <p class="tagline">
-        Um diamante tá escondido na praia. Cada um tem uma pista. Quem acha primeiro?
-      </p>
+      <p class="tagline">{t("home.tagline")}</p>
 
       <label class="field">
-        <span>Seu nome</span>
+        <span>{t("home.name")}</span>
         <input
           value={name}
           maxLength={16}
-          placeholder="Jogador"
+          placeholder={t("home.namePh")}
           onInput={(e) => setName((e.target as HTMLInputElement).value)}
         />
       </label>
 
       <button type="button" class="btn primary" disabled={busy} onClick={create}>
-        Criar sala
+        {t("home.create")}
       </button>
 
       <form class="join" onSubmit={join}>
         <input
           value={code}
           maxLength={4}
-          placeholder="CÓDIGO"
+          placeholder={t("home.codePh")}
           class="code-input"
           autoCapitalize="characters"
           autoCorrect="off"
           onInput={(e) => setCode((e.target as HTMLInputElement).value.toUpperCase())}
         />
         <button type="submit" class="btn">
-          Entrar
+          {t("home.join")}
         </button>
       </form>
 
@@ -87,9 +102,9 @@ export function Home() {
         class="btn ghost"
         onClick={() => code.length === 4 && navigate(`/tv/${code.toUpperCase()}`)}
       >
-        Abrir como TV / telão
+        {t("home.tv")}
       </button>
-      <p class="small">De 2 a 5 jogadores. Dá pra completar a mesa com bots.</p>
+      <p class="small">{t("home.players")}</p>
     </main>
   );
 }

@@ -6,11 +6,12 @@ import { HexInfo } from "../components/HexInfo";
 import { cellLabel, HexMap } from "../components/HexMap";
 import { Rules } from "../components/Rules";
 import { Seats } from "../components/Seats";
-import { describeEvents } from "../events";
+import { clueText, describeEvents, t } from "../i18n";
 import { send } from "../net";
 import { clearNotes, loadNotes, notes } from "../notes";
+import { soundOn, toggleSound } from "../sounds";
 import { clues, isHost, lastEvents, mySeat, you } from "../store";
-import { clueText, seatColor } from "../strings";
+import { seatColor } from "../strings";
 
 export function Game(p: { room: RoomView; game: GameView }) {
   const { room, game } = p;
@@ -23,6 +24,14 @@ export function Game(p: { room: RoomView; game: GameView }) {
     if (you.value) loadNotes(room.code, you.value.id);
   }, [room.code]);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") selected.value = null;
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const actor = game.phase === "finished" ? null : (game.pendingCube ?? game.turn);
   const mode: "cube" | "act" | "wait" | "over" =
     game.phase === "finished"
@@ -32,14 +41,6 @@ export function Game(p: { room: RoomView; game: GameView }) {
         : actor === seat
           ? "act"
           : "wait";
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") selected.value = null;
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
 
   // Close the popover when the turn state changes under us (e.g. after our action resolves).
   useEffect(() => {
@@ -73,6 +74,7 @@ export function Game(p: { room: RoomView; game: GameView }) {
     for (let c = 0; c < game.map.terrain.length; c++) if (!ok.has(c)) d.add(c);
     return d;
   }, [mode, myClues, assist, room.settings.assist, game.map]);
+
   // Highlight hexes every remaining hypothesis accepts, or the single hex left standing.
   const glow =
     mode !== "cube" && assist && room.settings.assist === "full"
@@ -98,13 +100,22 @@ export function Game(p: { room: RoomView; game: GameView }) {
       <header class="topbar">
         <span class="code">{room.code}</span>
         <span class={`status ${mode}`}>
-          {mode === "cube" && "Coloque um cubo onde sua pista diz NÃO"}
-          {mode === "act" &&
-            (game.phase === "setup" ? "Preparação: toque num hex" : "Sua vez! Toque num hex")}
-          {mode === "wait" && actor !== null && `Vez de ${game.seats[actor]?.name ?? "?"}`}
-          {mode === "over" && "Fim de jogo"}
+          {mode === "cube" && t("game.cube")}
+          {mode === "act" && (game.phase === "setup" ? t("game.setup") : t("game.yourTurn"))}
+          {mode === "wait" &&
+            actor !== null &&
+            t("game.turnOf", { name: game.seats[actor]?.name ?? "?" })}
+          {mode === "over" && t("game.over")}
         </span>
-        <button type="button" class="btn tiny" onClick={() => (rulesOpen.value = true)}>
+        <button type="button" class="btn tiny" aria-label={t("game.sound")} onClick={toggleSound}>
+          {soundOn.value ? "🔊" : "🔇"}
+        </button>
+        <button
+          type="button"
+          class="btn tiny"
+          aria-label={t("game.rules")}
+          onClick={() => (rulesOpen.value = true)}
+        >
           📖
         </button>
       </header>
@@ -143,9 +154,9 @@ export function Game(p: { room: RoomView; game: GameView }) {
       {narration && <p class="narration">{narration}</p>}
 
       <section class="clues">
-        <h3>{myClues.length > 1 ? "Suas pistas" : "Sua pista"}</h3>
+        <h3>{myClues.length > 1 ? t("game.yourClues") : t("game.yourClue")}</h3>
         {myClues.length === 0 ? (
-          <p class="small">Sem pista (você está só assistindo).</p>
+          <p class="small">{t("game.noClue")}</p>
         ) : (
           myClues.map((c, i) => (
             <p key={i} class="clue">
@@ -164,21 +175,23 @@ export function Game(p: { room: RoomView; game: GameView }) {
               {assist.opponents.map((o) => (
                 <li key={o}>
                   <span class="dot" style={`background:${seatColor(o)}`} />
-                  {game.seats[o]?.name}: {assist.oppHyps.get(o)?.length ?? 0} pistas possíveis
+                  {t("game.hyps", {
+                    name: game.seats[o]?.name ?? "?",
+                    n: assist.oppHyps.get(o)?.length ?? 0,
+                  })}
                 </li>
               ))}
               <li>
                 <span class="dot" style="background:#7be0ff" />
-                {assist.possible.length} hex{assist.possible.length === 1 ? "" : "es"} ainda
-                possíveis
+                {t("game.possible", { n: assist.possible.length })}
               </li>
             </ul>
           )}
           <p class="small">
-            Toque num hex pra ver detalhes e marcar anotações.{" "}
+            {t("game.hint")}{" "}
             {Object.keys(notes.value).length > 0 && (
               <button type="button" class="btn tiny ghost" onClick={clearNotes}>
-                limpar anotações
+                {t("game.clearNotes")}
               </button>
             )}
           </p>
@@ -188,9 +201,14 @@ export function Game(p: { room: RoomView; game: GameView }) {
       {game.phase === "finished" && (
         <section class="reveal">
           <h2>
-            💎 {game.winner !== null ? `${game.seats[game.winner]?.name} achou o diamante!` : "Fim"}
+            💎{" "}
+            {game.winner !== null
+              ? t("game.found", { name: game.seats[game.winner]?.name ?? "?" })
+              : t("game.end")}
           </h2>
-          <p>Estava em {game.solution !== null ? cellLabel(game.solution) : "?"}.</p>
+          <p>
+            {t("game.wasAt", { cell: game.solution !== null ? cellLabel(game.solution) : "?" })}
+          </p>
           <ul class="all-clues">
             {game.allClues?.map((cs, s) => (
               <li key={s}>
@@ -201,7 +219,7 @@ export function Game(p: { room: RoomView; game: GameView }) {
           </ul>
           {isHost.value && (
             <button type="button" class="btn primary big" onClick={() => send({ t: "rematch" })}>
-              Jogar de novo
+              {t("game.again")}
             </button>
           )}
         </section>

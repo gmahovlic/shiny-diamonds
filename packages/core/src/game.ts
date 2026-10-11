@@ -39,9 +39,24 @@ export type GameEvent =
   | { type: "found"; seat: number; cell: Cell }
   | { type: "turn"; seat: number };
 
+/** Rule violation codes; the client translates them. */
+export type RuleError =
+  | "game_over"
+  | "invalid_seat"
+  | "no_cube_owed"
+  | "already_marked"
+  | "cube_needs_no"
+  | "not_in_play"
+  | "cube_owed"
+  | "not_your_turn"
+  | "invalid_target"
+  | "target_marked"
+  | "search_cubed"
+  | "search_needs_yes";
+
 export type Result =
   | { ok: true; state: GameState; events: GameEvent[] }
-  | { ok: false; error: string };
+  | { ok: false; error: RuleError };
 
 export const SETUP_CUBES = 2;
 
@@ -93,16 +108,16 @@ function clone(s: GameState): GameState {
 export function reduce(prev: GameState, action: Action, oracle: Oracle): Result {
   const s = clone(prev);
   const events: GameEvent[] = [];
-  const fail = (error: string): Result => ({ ok: false, error });
+  const fail = (error: RuleError): Result => ({ ok: false, error });
 
-  if (s.phase === "finished") return fail("game is over");
-  if (action.seat < 0 || action.seat >= s.seats) return fail("invalid seat");
+  if (s.phase === "finished") return fail("game_over");
+  if (action.seat < 0 || action.seat >= s.seats) return fail("invalid_seat");
 
   switch (action.type) {
     case "placeCube": {
-      if (s.pendingCube !== action.seat) return fail("no cube owed by this seat");
-      if (hasMarker(s, action.seat, action.cell)) return fail("you already marked this cell");
-      if (oracle(action.seat, action.cell)) return fail("cube must go on a cell your clue rejects");
+      if (s.pendingCube !== action.seat) return fail("no_cube_owed");
+      if (hasMarker(s, action.seat, action.cell)) return fail("already_marked");
+      if (oracle(action.seat, action.cell)) return fail("cube_needs_no");
 
       const isSetup = s.phase === "setup";
       addMarker(
@@ -130,12 +145,12 @@ export function reduce(prev: GameState, action: Action, oracle: Oracle): Result 
     }
 
     case "ask": {
-      if (s.phase !== "playing") return fail("not in play");
-      if (s.pendingCube !== null) return fail("a cube is still owed");
-      if (action.seat !== s.turn) return fail("not your turn");
+      if (s.phase !== "playing") return fail("not_in_play");
+      if (s.pendingCube !== null) return fail("cube_owed");
+      if (action.seat !== s.turn) return fail("not_your_turn");
       if (action.target === action.seat || action.target < 0 || action.target >= s.seats)
-        return fail("invalid target");
-      if (hasMarker(s, action.target, action.cell)) return fail("target already marked this cell");
+        return fail("invalid_target");
+      if (hasMarker(s, action.target, action.cell)) return fail("target_marked");
 
       const yes = oracle(action.target, action.cell);
       events.push({
@@ -157,12 +172,11 @@ export function reduce(prev: GameState, action: Action, oracle: Oracle): Result 
     }
 
     case "search": {
-      if (s.phase !== "playing") return fail("not in play");
-      if (s.pendingCube !== null) return fail("a cube is still owed");
-      if (action.seat !== s.turn) return fail("not your turn");
-      if (hasCube(s, action.cell)) return fail("cannot search a cell with a cube");
-      if (!oracle(action.seat, action.cell))
-        return fail("you can only search a cell your clue accepts");
+      if (s.phase !== "playing") return fail("not_in_play");
+      if (s.pendingCube !== null) return fail("cube_owed");
+      if (action.seat !== s.turn) return fail("not_your_turn");
+      if (hasCube(s, action.cell)) return fail("search_cubed");
+      if (!oracle(action.seat, action.cell)) return fail("search_needs_yes");
 
       addMarker(s, events, { cell: action.cell, seat: action.seat, kind: "disc" }, "search");
       let stoppedBy: number | null = null;

@@ -1,4 +1,5 @@
 import type { GameView } from "@shiny/core";
+import { t } from "../i18n";
 import { seatColor } from "../strings";
 
 export function Seats(p: { game: GameView; mySeat?: number | null; big?: boolean }) {
@@ -14,10 +15,12 @@ export function Seats(p: { game: GameView; mySeat?: number | null; big?: boolean
           <span class="name">
             {s.name}
             {s.bot ? " 🤖" : ""}
-            {p.mySeat === s.seat ? " (você)" : ""}
+            {p.mySeat === s.seat ? ` ${t("seat.you")}` : ""}
           </span>
           {actor === s.seat && (
-            <span class="hint">{p.game.pendingCube === s.seat ? "colocando cubo" : "na vez"}</span>
+            <span class="hint">
+              {p.game.pendingCube === s.seat ? t("seat.cubing") : t("seat.turn")}
+            </span>
           )}
         </li>
       ))}

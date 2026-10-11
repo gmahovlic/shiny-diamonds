@@ -901,3 +901,14 @@ input::placeholder {
 .lobby.tv .members li {
   font-size: 1.4rem;
 }
+
+/* Language switch + centered rows */
+.langbar {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.center-row {
+  text-align: center;
+  margin-top: 8px;
+}

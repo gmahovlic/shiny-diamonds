@@ -1,6 +1,7 @@
 import type { Cell, GameView } from "@shiny/core";
+import { colorName, structureName, t, terrainName, territoryName } from "../i18n";
 import { cycleNote, type Note } from "../notes";
-import { COLOR_NAME, STRUCTURE_NAME, seatColor, TERRAIN_NAME, TERRITORY_NAME } from "../strings";
+import { seatColor } from "../strings";
 import { cellLabel, hexCenter, MAP_H, MAP_W } from "./HexMap";
 
 export interface HexInfoProps {
@@ -39,16 +40,16 @@ export function HexInfo(p: HexInfoProps) {
     >
       <header>
         <strong>{cellLabel(cell)}</strong>
-        <span class="t">{terrain ? TERRAIN_NAME[terrain] : ""}</span>
-        <button type="button" class="x" aria-label="fechar" onClick={p.onClose}>
+        <span class="t">{terrain ? terrainName(terrain) : ""}</span>
+        <button type="button" class="x" aria-label={t("hex.close")} onClick={p.onClose}>
           ×
         </button>
       </header>
       <ul class="facts">
-        {territory && <li>Território: {TERRITORY_NAME[territory]}</li>}
+        {territory && <li>{t("hex.territory", { name: territoryName(territory) })}</li>}
         {structure && (
           <li>
-            {STRUCTURE_NAME[structure.kind]} {COLOR_NAME[structure.color]}
+            {structureName(structure.kind)} {colorName(structure.color)}
           </li>
         )}
         {marks.length > 0 && (
@@ -56,13 +57,13 @@ export function HexInfo(p: HexInfoProps) {
             {marks.map((m) => (
               <span key={m.seat} class="mark">
                 <i class={m.kind} style={`background:${seatColor(m.seat)}`} />
-                {game.seats[m.seat]?.name}: {m.kind === "disc" ? "sim" : "não"}
+                {game.seats[m.seat]?.name}: {m.kind === "disc" ? t("hex.yes") : t("hex.no")}
               </span>
             ))}
           </li>
         )}
         {marks.length === 0 && !territory && !structure && (
-          <li class="muted">Nada por aqui ainda.</li>
+          <li class="muted">{t("hex.nothing")}</li>
         )}
       </ul>
       <div class="actions">
@@ -76,11 +77,11 @@ export function HexInfo(p: HexInfoProps) {
                 style={`border-color:${seatColor(o.seat)}`}
                 onClick={() => p.onAsk(o.seat)}
               >
-                Perguntar a {o.name}
+                {t("hex.ask", { name: o.name })}
               </button>
             ))}
             <button type="button" class="btn small primary" onClick={p.onSearch}>
-              🔎 Procurar aqui
+              {t("hex.search")}
             </button>
           </>
         )}
@@ -91,12 +92,12 @@ export function HexInfo(p: HexInfoProps) {
             disabled={!p.cubeLegal}
             onClick={p.onCube}
           >
-            {p.cubeLegal ? "Colocar cubo aqui" : "Sua pista diz SIM aqui"}
+            {p.cubeLegal ? t("hex.cube") : t("hex.cubeNo")}
           </button>
         )}
         {p.canNote && (
           <button type="button" class="btn small ghost" onClick={() => cycleNote(cell)}>
-            {p.note === 1 ? "✕ marcado · trocar" : p.note === 2 ? "? marcado · limpar" : "✏️ marcar"}
+            {p.note === 1 ? t("hex.markX") : p.note === 2 ? t("hex.markQ") : t("hex.mark")}
           </button>
         )}
       </div>

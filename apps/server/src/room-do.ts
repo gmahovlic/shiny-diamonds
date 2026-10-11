@@ -1,5 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
-import type { Role } from "@shiny/core";
+import { type ErrorCode, type Role, WS_REFUSED } from "@shiny/core";
 import { newRoomState, type Outbound, Room, type RoomState, type StepResult } from "./room";
 import { parseClientMessage } from "./validate";
 
@@ -56,20 +56,23 @@ export class RoomDO extends DurableObject<Env> {
     }
 
     if (url.pathname === "/ws") {
-      const room = await this.load();
-      if (!room) return new Response("room not found", { status: 404 });
-      if (request.headers.get("Upgrade") !== "websocket") {
+      if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") {
         return new Response("expected websocket", { status: 426 });
+      }
+      const room = await this.load();
+      if (!room) {
+        const pair = new WebSocketPair();
+        return this.refuse(pair[0], pair[1], "room_not_found");
       }
       const role: Role = url.searchParams.get("role") === "display" ? "display" : "player";
       const token = url.searchParams.get("token") ?? undefined;
       const name = url.searchParams.get("name") ?? undefined;
 
       const result = room.connect({ token, name, role, now: Date.now() });
-      if (!result.ok) return new Response(result.reason, { status: 403 });
-
       const pair = new WebSocketPair();
       const [client, server] = [pair[0], pair[1]];
+      if (!result.ok) return this.refuse(client, server, result.reason);
+
       server.serializeAttachment({ memberId: result.member.id } satisfies Attachment);
       this.ctx.acceptWebSocket(server);
       this.deliver(result.outbound);
@@ -87,13 +90,21 @@ export class RoomDO extends DurableObject<Env> {
     return new Response("not found", { status: 404 });
   }
 
+  /** Complete the handshake, tell the client why, then close: browsers can't read a 403 body. */
+  private refuse(client: WebSocket, server: WebSocket, code: ErrorCode): Response {
+    server.accept();
+    server.send(JSON.stringify({ t: "error", code }));
+    server.close(WS_REFUSED, code);
+    return new Response(null, { status: 101, webSocket: client });
+  }
+
   override async webSocketMessage(ws: WebSocket, data: string | ArrayBuffer): Promise<void> {
     const room = await this.load();
     if (!room) return ws.close(1011, "room gone");
     const { memberId } = ws.deserializeAttachment() as Attachment;
     const msg = typeof data === "string" ? parseClientMessage(data) : null;
     if (!msg) {
-      ws.send(JSON.stringify({ t: "error", message: "malformed message" }));
+      ws.send(JSON.stringify({ t: "error", code: "malformed" }));
       return;
     }
     const result = room.handle(memberId, msg, Date.now());

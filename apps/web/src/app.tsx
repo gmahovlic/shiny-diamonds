@@ -1,4 +1,5 @@
 import { useEffect } from "preact/hooks";
+import { t } from "./i18n";
 import { connect, disconnect, nameKey } from "./net";
 import { Game } from "./pages/Game";
 import { Home } from "./pages/Home";
@@ -26,10 +27,10 @@ function RoomPage(p: { code: string; tv: boolean }) {
   if (err) {
     return (
       <main class="center">
-        <h2>Ops</h2>
+        <h2>{t("conn.oops")}</h2>
         <p>{err}</p>
         <button type="button" class="btn" onClick={() => navigate("/")}>
-          Voltar
+          {t("conn.back")}
         </button>
       </main>
     );
@@ -37,7 +38,9 @@ function RoomPage(p: { code: string; tv: boolean }) {
   if (!r) {
     return (
       <main class="center">
-        <p class="pulse">{status.value === "reconnecting" ? "Reconectando…" : "Conectando…"}</p>
+        <p class="pulse">
+          {status.value === "reconnecting" ? t("conn.reconnecting") : t("conn.connecting")}
+        </p>
       </main>
     );
   }
@@ -52,7 +55,9 @@ export function App() {
       {rt.page === "home" && <Home />}
       {rt.page === "player" && <RoomPage code={rt.code} tv={false} />}
       {rt.page === "tv" && <RoomPage code={rt.code} tv />}
-      {status.value === "reconnecting" && room.value && <div class="banner">Reconectando…</div>}
+      {status.value === "reconnecting" && room.value && (
+        <div class="banner">{t("conn.reconnecting")}</div>
+      )}
       {toast.value && <div class="toast">{toast.value}</div>}
     </div>
   );

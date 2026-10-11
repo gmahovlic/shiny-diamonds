@@ -1,4 +1,4 @@
-import type { Action, GameEvent, Marker, Phase } from "./game";
+import type { Action, GameEvent, Marker, Phase, RuleError } from "./game";
 import type { Cell } from "./hex";
 import type { BeachMap, Clue } from "./types";
 
@@ -70,9 +70,30 @@ export type ClientMessage =
   | { t: "rematch" }
   | { t: "ping" };
 
+/** Why a room refused a message or a connection. */
+export type ErrorCode =
+  | RuleError
+  | "unknown_member"
+  | "rename_in_game"
+  | "host_only"
+  | "game_started"
+  | "room_full"
+  | "host_self_remove"
+  | "need_players"
+  | "not_finished"
+  | "no_game"
+  | "not_seated"
+  | "own_seat_only"
+  | "malformed"
+  | "room_not_found"
+  | "internal";
+
+/** WebSocket close code used when a connection is refused with an ErrorCode as reason. */
+export const WS_REFUSED = 4000;
+
 export type ServerMessage =
   | { t: "welcome"; you: { id: string; token: string; role: Role }; room: RoomView }
   | { t: "room"; room: RoomView; events?: GameEvent[] }
   | { t: "clues"; clues: Clue[] }
-  | { t: "error"; message: string }
+  | { t: "error"; code: ErrorCode; params?: Record<string, string | number> }
   | { t: "pong" };

@@ -1,5 +1,7 @@
 import { computed, signal } from "@preact/signals";
 import type { Clue, GameEvent, RoomView, ServerMessage } from "@shiny/core";
+import { errorText } from "./i18n";
+import { play } from "./sounds";
 
 export type ConnStatus = "idle" | "connecting" | "open" | "reconnecting" | "closed";
 
@@ -31,6 +33,20 @@ export function showToast(message: string): void {
   }, 3200);
 }
 
+function soundFor(events: GameEvent[], next: RoomView): void {
+  const seat = next.members.find((m) => m.id === you.value?.id)?.seat ?? null;
+  if (events.some((e) => e.type === "found")) {
+    play("found");
+    return;
+  }
+  const asked = events.find((e) => e.type === "asked");
+  if (asked && asked.type === "asked") play(asked.yes ? "yes" : "no");
+  const searched = events.find((e) => e.type === "searched");
+  if (searched && searched.type === "searched") play(searched.stoppedBy === null ? "yes" : "no");
+  const turn = events.filter((e) => e.type === "turn").pop();
+  if (turn && turn.type === "turn" && turn.seat === seat && seat !== null) play("turn");
+}
+
 export function applyServerMessage(msg: ServerMessage): void {
   switch (msg.t) {
     case "welcome":
@@ -39,6 +55,7 @@ export function applyServerMessage(msg: ServerMessage): void {
       break;
     case "room":
       if (msg.room.phase === "lobby") clues.value = [];
+      if (msg.events?.length) soundFor(msg.events, msg.room);
       room.value = msg.room;
       lastEvents.value = msg.events ?? [];
       break;
@@ -46,7 +63,7 @@ export function applyServerMessage(msg: ServerMessage): void {
       clues.value = msg.clues;
       break;
     case "error":
-      showToast(msg.message);
+      showToast(errorText(msg.code, msg.params));
       break;
     case "pong":
       break;

@@ -1,4 +1,11 @@
-import type { ClientMessage, Role, ServerMessage } from "@shiny/core";
+import {
+  type ClientMessage,
+  type ErrorCode,
+  type Role,
+  type ServerMessage,
+  WS_REFUSED,
+} from "@shiny/core";
+import { errorText, t } from "./i18n";
 import { applyServerMessage, joinError, resetStore, status } from "./store";
 
 const PING_MS = 25_000;
@@ -23,14 +30,9 @@ function saveToken(code: string, token: string): void {
 
 export async function createRoom(): Promise<string> {
   const res = await fetch("/api/rooms", { method: "POST" });
-  if (!res.ok) throw new Error("não consegui criar a sala");
+  if (!res.ok) throw new Error(t("home.createFail"));
   const { code } = (await res.json()) as { code: string };
   return code;
-}
-
-export async function roomExists(code: string): Promise<boolean> {
-  const res = await fetch(`/api/rooms/${encodeURIComponent(code)}`);
-  return res.ok;
 }
 
 class Connection {
@@ -38,6 +40,7 @@ class Connection {
   private pingTimer: ReturnType<typeof setInterval> | undefined;
   private retry = 0;
   private closedByUs = false;
+  private refused = false;
 
   constructor(
     private readonly code: string,
@@ -64,20 +67,25 @@ class Connection {
     ws.onmessage = (e) => {
       const msg = JSON.parse(String(e.data)) as ServerMessage;
       if (msg.t === "welcome") saveToken(this.code, msg.you.token);
+      if (msg.t === "error" && !status.value.startsWith("open") && !this.refused) {
+        // Refusal before welcome: the close that follows carries the same code.
+        this.refused = true;
+        joinError.value = errorText(msg.code, msg.params);
+        return;
+      }
       applyServerMessage(msg);
     };
     ws.onclose = (e) => {
       clearInterval(this.pingTimer);
       if (this.closedByUs) return;
-      // 1008/403-style rejections (room full, not found) are not worth retrying.
-      if (this.retry === 0 && e.code !== 1006 && e.code !== 1001 && e.code !== 1000) {
-        joinError.value = e.reason || "não deu pra entrar na sala";
+      if (e.code === WS_REFUSED || this.refused) {
+        joinError.value = joinError.value ?? errorText((e.reason || "room_not_found") as ErrorCode);
         status.value = "closed";
         return;
       }
       if (this.retry >= 8) {
         status.value = "closed";
-        joinError.value = "sem conexão com a sala";
+        joinError.value = t("conn.lost");
         return;
       }
       const delay = Math.min(8000, 500 * 2 ** this.retry++);
