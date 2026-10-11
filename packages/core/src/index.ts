@@ -6,5 +6,6 @@ export * from "./generator";
 export * from "./hex";
 export * from "./mapgen";
 export * from "./oracle";
+export * from "./protocol";
 export * from "./rng";
 export * from "./types";

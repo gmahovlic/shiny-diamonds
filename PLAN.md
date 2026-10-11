@@ -156,7 +156,19 @@ espera, zero erro honesto, e o reducer de regras (`packages/core/game.ts`) receb
 `oracle(seat, cell)`.
 
 **Protocolo:** JSON, mensagens tipadas em `packages/core/protocol.ts` compartilhadas
-entre cliente e servidor (sem gerar código, só tipos).
+entre cliente e servidor (sem gerar código, só tipos). Toda mensagem que chega é
+validada em `apps/server/validate.ts` antes de tocar na sala.
+
+**Como ficou (fase 2):**
+- `apps/server/room.ts` é a sala pura (sem I/O): recebe mensagem, devolve lista de
+  "mandar X pra Y". 100% testável no Vitest comum.
+- `apps/server/room-do.ts` é só transporte: WebSocket Hibernation, storage, alarm.
+- Um alarm só: o mais cedo entre "vez do bot" (1,2 s) e "expirar sala" (6 h sem
+  atividade e sem ninguém conectado).
+- Endpoints: `POST /api/rooms` → `{code}`; `GET /api/rooms/:code` → fase;
+  `GET /api/rooms/:code/ws?role=player|display&name=&token=` → WebSocket.
+- Lobby: quem cai sai da lista e o host passa pro próximo humano. Durante a partida,
+  quem cai fica marcado como offline e volta com o token.
 
 ---
 
@@ -239,7 +251,8 @@ monsterous/
 1. **Core** ✅ — grid, terrenos, estruturas, pistas, solver, gerador, banco de seeds,
    regras de turno (reducer puro), testes (incluindo "todo seed do banco tem exatamente
    1 solução").
-2. **Server** — DO de sala, protocolo, join/reconnect, ciclo de partida, alarm de limpeza.
+2. **Server** ✅ — DO de sala, protocolo, join/reconnect, ciclo de partida, bots por alarm,
+   alarm de limpeza (6 h ocioso), deploy automático da `main`.
 3. **Web** — lobby (criar/entrar/QR), tela do jogador, tela da TV, responsivo, i18n.
 4. **Polish** — arte própria, PWA, sons, dificuldades, analytics, teste em TV de verdade.
 5. **Depois** — contas (D1), ads, remover ads (Stripe), stats.
