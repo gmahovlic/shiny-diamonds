@@ -57,21 +57,42 @@ export function MapDefs() {
       {/* Palmeira */}
       <symbol id="s-palm" viewBox="-10 -10 20 20">
         <path
-          d="M0 8 Q1.5 2 0.5 -2"
+          d="M-1.5 9.5 C-1 5.5 0.8 2 1 -1.5"
           fill="none"
-          stroke="#7a4b23"
-          stroke-width="2"
+          stroke="#7a4e26"
+          stroke-width="2.4"
           stroke-linecap="round"
         />
-        <g fill="#1e7a3e">
-          <ellipse rx="6" ry="2" transform="translate(0.5 -2) rotate(-55) translate(4 0)" />
-          <ellipse rx="6" ry="2" transform="translate(0.5 -2) rotate(-15) translate(4 0)" />
-          <ellipse rx="6" ry="2" transform="translate(0.5 -2) rotate(-125) translate(4 0)" />
-          <ellipse rx="6" ry="2" transform="translate(0.5 -2) rotate(-165) translate(4 0)" />
-          <ellipse rx="5" ry="1.6" transform="translate(0.5 -2) rotate(-90) translate(4 0)" />
+        <path
+          d="M-1.5 9.5 C-1 5.5 0.8 2 1 -1.5"
+          fill="none"
+          stroke="#b07a3c"
+          stroke-width="0.9"
+          stroke-linecap="round"
+          stroke-dasharray="1.2 1.7"
+        />
+        <g transform="translate(1 -2.2)">
+          <g id="s-frond">
+            <path
+              d="M0 0 C2.5 -3.4 6.5 -3.6 9.2 -1.2 C8.4 0.6 6.2 1.4 3.6 1.1 C2 0.9 0.8 0.5 0 0 Z"
+              fill="#2f9a52"
+              stroke="#1b5e33"
+              stroke-width="0.45"
+              stroke-linejoin="round"
+            />
+            <path d="M0 0 C3 -1.8 6 -1.8 9 -1.1" fill="none" stroke="#1b5e33" stroke-width="0.5" />
+          </g>
+          <use href="#s-frond" transform="rotate(-62)" />
+          <use href="#s-frond" transform="rotate(-22)" />
+          <use href="#s-frond" transform="rotate(22)" />
+          <use href="#s-frond" transform="scale(-1 1) rotate(-62)" />
+          <use href="#s-frond" transform="scale(-1 1) rotate(-22)" />
+          <use href="#s-frond" transform="scale(-1 1) rotate(22)" />
+          <use href="#s-frond" transform="rotate(-95) scale(0.8)" />
+          <circle cx="-1.1" cy="0.9" r="1.1" fill="#8a5a2b" stroke="#5a3a18" stroke-width="0.4" />
+          <circle cx="1.2" cy="1.2" r="1.1" fill="#8a5a2b" stroke="#5a3a18" stroke-width="0.4" />
+          <circle cx="0" cy="2.1" r="1" fill="#8a5a2b" stroke="#5a3a18" stroke-width="0.4" />
         </g>
-        <circle cx="-1" cy="-1" r="1.1" fill="#7a4b23" />
-        <circle cx="1.5" cy="-0.5" r="1.1" fill="#7a4b23" />
       </symbol>
 
       {/* Gaivota */}
@@ -138,26 +159,24 @@ export function MapDefs() {
         <rect x="-2" y="3" width="4" height="5" fill="#0b2a3b" opacity="0.5" />
       </symbol>
 
-      {/* Barraca de praia: guarda-sol listrado. Cor via currentColor. */}
+      {/* Barraca de praia: guarda-sol com gomos. Cor via currentColor. */}
       <symbol id="s-tent" viewBox="-12 -12 24 24">
-        <path d="M0 2 V9" stroke="#0b2a3b" stroke-width="1.6" stroke-linecap="round" />
-        <path
-          d="M-11 2 A11 11 0 0 1 11 2 Z"
-          fill="currentColor"
-          stroke="#0b2a3b"
-          stroke-width="1.2"
-        />
-        <path
-          d="M-7.8 -5.8 L-4 2 M-3 -8.6 L-1.5 2 M3 -8.6 L1.5 2 M7.8 -5.8 L4 2"
-          stroke="#0b2a3b"
-          stroke-width="2.2"
-          opacity="0.35"
-        />
-        <path
-          d="M-11 2 Q-9.6 4 -8.2 2 Q-6.8 4 -5.4 2 Q-4 4 -2.6 2 Q-1.2 4 0.2 2 Q1.6 4 3 2 Q4.4 4 5.8 2 Q7.2 4 8.6 2 Q9.8 4 11 2"
-          fill="#0b2a3b"
-          opacity="0.35"
-        />
+        <ellipse cx="1" cy="9.5" rx="7" ry="1.6" fill="#0b2a3b" opacity="0.25" />
+        <path d="M0 2 L0.6 10" stroke="#3a2a1a" stroke-width="1.4" stroke-linecap="round" />
+        <g stroke="#0b2a3b" stroke-width="0.9" stroke-linejoin="round">
+          <path d="M0 -9 L-11 2 Q-9.2 3.8 -7.3 2.6 Z" fill="currentColor" />
+          <path d="M0 -9 L-7.3 2.6 Q-5.5 4.2 -3.7 3.2 Z" fill="#fff" />
+          <path d="M0 -9 L-3.7 3.2 Q-1.8 4.6 0 3.4 Z" fill="currentColor" />
+          <path d="M0 -9 L0 3.4 Q1.8 4.6 3.7 3.2 Z" fill="#fff" />
+          <path d="M0 -9 L3.7 3.2 Q5.5 4.2 7.3 2.6 Z" fill="currentColor" />
+          <path d="M0 -9 L7.3 2.6 Q9.2 3.8 11 2 Z" fill="#fff" />
+        </g>
+        <g fill="#0b2a3b" opacity="0.18">
+          <path d="M0 -9 L-7.3 2.6 Q-5.5 4.2 -3.7 3.2 Z" />
+          <path d="M0 -9 L0 3.4 Q1.8 4.6 3.7 3.2 Z" />
+          <path d="M0 -9 L7.3 2.6 Q9.2 3.8 11 2 Z" />
+        </g>
+        <circle cx="0" cy="-9.4" r="1" fill="#3a2a1a" />
       </symbol>
 
       {/* Diamante facetado */}

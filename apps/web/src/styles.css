@@ -465,9 +465,6 @@ select {
   width: 300px;
   height: 300px;
 }
-.lobby.tv .members li {
-  font-size: 1.4rem;
-}
 .tvgame {
   max-width: none;
   display: grid;
@@ -832,4 +829,9 @@ select {
     opacity: 1;
     transform: scale(1.1);
   }
+}
+
+/* TV lobby (kept last so it wins over generic li rules) */
+.lobby.tv .members li {
+  font-size: 1.4rem;
 }
