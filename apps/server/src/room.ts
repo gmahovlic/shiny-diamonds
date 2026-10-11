@@ -360,7 +360,7 @@ export class Room {
 
     const outbound: Outbound[] = [...this.broadcast()];
     for (const m of seatOrder) if (!m.bot) outbound.push(...this.cluesFor(m.id));
-    return { outbound, botDueIn: this.botDue() };
+    return { outbound, botDueIn: this.botDueIn() };
   }
 
   private oracle(): Oracle {
@@ -377,7 +377,7 @@ export class Room {
     s.game = r.state;
     s.lastActivity = now;
     if (s.game.phase === "finished") s.phase = "finished";
-    return { outbound: this.broadcast(r.events), botDueIn: this.botDue() };
+    return { outbound: this.broadcast(r.events), botDueIn: this.botDueIn() };
   }
 
   /** Seat index that must act next, or null. */
@@ -387,7 +387,8 @@ export class Room {
     return g.pendingCube ?? g.turn;
   }
 
-  private botDue(): number | null {
+  /** Milliseconds until the seat that must act (a bot) should move, or null if a human is up. */
+  botDueIn(): number | null {
     const seat = this.actor();
     if (seat === null) return null;
     const owner = this.state.members.find((m) => m.id === this.state.seatOwners[seat]);

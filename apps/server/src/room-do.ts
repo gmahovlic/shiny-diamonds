@@ -139,12 +139,20 @@ export class RoomDO extends DurableObject<Env> {
     await this.armAlarm(result.botDueIn);
   }
 
-  /** One alarm serves both the bot timer and room expiry; the earlier wins. */
-  private async armAlarm(botDueIn: number | null): Promise<void> {
+  /**
+   * One alarm serves both the bot timer and room expiry. The due time is derived from room
+   * state (not from the last message) so a ping or a rejected action can never cancel a
+   * pending bot turn, and an already-armed earlier alarm is never pushed back.
+   */
+  private async armAlarm(_hint: number | null): Promise<void> {
     const room = this.room;
     if (!room) return;
+    const now = Date.now();
     const expiry = room.state.lastActivity + ROOM_TTL_MS;
-    const at = botDueIn === null ? expiry : Math.min(expiry, Date.now() + botDueIn);
+    const due = room.botDueIn();
+    let at = due === null ? expiry : Math.min(expiry, now + due);
+    const existing = await this.ctx.storage.getAlarm();
+    if (existing !== null && existing > now && existing < at) at = existing;
     await this.ctx.storage.setAlarm(at);
   }
 

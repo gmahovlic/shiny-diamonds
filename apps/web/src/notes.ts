@@ -3,7 +3,6 @@ import { signal } from "@preact/signals";
 /** Private per-hex marks: 0 none, 1 "impossível", 2 "dúvida". Stored only on this device. */
 export type Note = 0 | 1 | 2;
 export const notes = signal<Record<number, Note>>({});
-export const notesMode = signal(false);
 
 let key = "";
 
