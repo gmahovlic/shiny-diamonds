@@ -104,6 +104,7 @@ const pt = {
   "hex.close": "fechar",
   "seat.you": "(você)",
   "seat.cubing": "colocando cubo",
+  "seat.answering": "respondendo",
   "seat.turn": "na vez",
   "ev.found": "💎 {name} achou o diamante em {cell}!",
   "ev.searched": "{name} procurou em {cell}",
@@ -201,6 +202,25 @@ const pt = {
   "err.own_seat_only": "só dá pra agir pelo seu assento",
   "err.malformed": "mensagem inválida",
   "err.room_not_found": "essa sala não existe (ou expirou)",
+  "lobby.house": "Regras da casa",
+  "lobby.setupCubes": "Cubos iniciais (2 por jogador)",
+  "lobby.penaltyCube": "Cubo de penalidade após um NÃO",
+  "lobby.manualAnswers": "Jogadores respondem na mão (bots respondem sozinhos)",
+  "game.answerAsk": "{name} perguntou: sua pista aceita {cell}?",
+  "game.answerSearch": "{name} está procurando em {cell}. Sua pista aceita?",
+  "game.yes": "SIM",
+  "game.no": "NÃO",
+  "game.waitingAnswer": "Esperando {name} responder sobre {cell}…",
+  "game.answerStatus": "Responda: {cell}",
+  "ev.question": "{name} perguntou a {target} sobre {cell}…",
+  "ev.searchStart": "{name} está procurando em {cell}…",
+  "rules.kiosk": "quiosque",
+  "rules.tent": "barraca",
+  "rules.house":
+    "Regras da casa (opcionais no lobby): cubos iniciais, cubo de penalidade e resposta manual.",
+  "err.answer_owed": "alguém ainda precisa responder",
+  "err.nothing_to_answer": "não tem pergunta pra você responder",
+  "err.wrong_answer": "sua pista diz o contrário, confere de novo",
   "err.internal": "deu ruim aqui dentro, tenta de novo",
 } as const;
 
@@ -274,6 +294,7 @@ const en: Record<Key, string> = {
   "hex.close": "close",
   "seat.you": "(you)",
   "seat.cubing": "placing a cube",
+  "seat.answering": "answering",
   "seat.turn": "up now",
   "ev.found": "💎 {name} found the diamond at {cell}!",
   "ev.searched": "{name} searched {cell}",
@@ -369,6 +390,25 @@ const en: Record<Key, string> = {
   "err.own_seat_only": "you can only act for your own seat",
   "err.malformed": "invalid message",
   "err.room_not_found": "that room doesn't exist (or expired)",
+  "lobby.house": "House rules",
+  "lobby.setupCubes": "Starting cubes (2 per player)",
+  "lobby.penaltyCube": "Penalty cube after a NO",
+  "lobby.manualAnswers": "Players answer by hand (bots answer on their own)",
+  "game.answerAsk": "{name} asked: does your clue accept {cell}?",
+  "game.answerSearch": "{name} is searching {cell}. Does your clue accept it?",
+  "game.yes": "YES",
+  "game.no": "NO",
+  "game.waitingAnswer": "Waiting for {name} to answer about {cell}…",
+  "game.answerStatus": "Answer: {cell}",
+  "ev.question": "{name} asked {target} about {cell}…",
+  "ev.searchStart": "{name} is searching {cell}…",
+  "rules.kiosk": "kiosk",
+  "rules.tent": "umbrella",
+  "rules.house":
+    "House rules (optional in the lobby): starting cubes, penalty cube and manual answers.",
+  "err.answer_owed": "someone still has to answer",
+  "err.nothing_to_answer": "there is no question for you to answer",
+  "err.wrong_answer": "your clue says otherwise, check again",
   "err.internal": "something broke in here, try again",
 };
 
@@ -417,6 +457,15 @@ export function describeEvents(events: GameEvent[], game: GameView): string | nu
     switch (e.type) {
       case "found":
         return t("ev.found", { name: name(e.seat), cell: cellLabel(e.cell) });
+      case "question":
+        return t("ev.question", {
+          name: name(e.seat),
+          target: name(e.target),
+          cell: cellLabel(e.cell),
+        });
+      case "searchStart":
+        if (events.some((x) => x.type === "searched")) break;
+        return t("ev.searchStart", { name: name(e.seat), cell: cellLabel(e.cell) });
       case "searched":
         return e.stoppedBy === null
           ? t("ev.searched", { name: name(e.seat), cell: cellLabel(e.cell) })

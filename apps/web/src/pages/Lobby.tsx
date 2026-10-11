@@ -124,6 +124,39 @@ export function Lobby(p: { room: RoomView; tv?: boolean }) {
               <span>{t("lobby.hard")}</span>
             </label>
           </div>
+          <div class="house">
+            <span class="small">{t("lobby.house")}</span>
+            <label class="toggle">
+              <input
+                type="checkbox"
+                checked={r.settings.manualAnswers}
+                onChange={(e) =>
+                  send({ t: "settings", manualAnswers: (e.target as HTMLInputElement).checked })
+                }
+              />
+              <span>{t("lobby.manualAnswers")}</span>
+            </label>
+            <label class="toggle">
+              <input
+                type="checkbox"
+                checked={r.settings.setupCubes}
+                onChange={(e) =>
+                  send({ t: "settings", setupCubes: (e.target as HTMLInputElement).checked })
+                }
+              />
+              <span>{t("lobby.setupCubes")}</span>
+            </label>
+            <label class="toggle">
+              <input
+                type="checkbox"
+                checked={r.settings.penaltyCube}
+                onChange={(e) =>
+                  send({ t: "settings", penaltyCube: (e.target as HTMLInputElement).checked })
+                }
+              />
+              <span>{t("lobby.penaltyCube")}</span>
+            </label>
+          </div>
           <label class="field">
             <span>{t("lobby.assist")}</span>
             <select

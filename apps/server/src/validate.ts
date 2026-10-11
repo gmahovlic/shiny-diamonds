@@ -8,7 +8,10 @@ const isSeat = (v: unknown): v is number => isInt(v) && v >= 0 && v < 5;
 function parseAction(a: unknown): Action | null {
   if (!a || typeof a !== "object") return null;
   const o = a as Record<string, unknown>;
-  if (!isSeat(o.seat) || !isCell(o.cell)) return null;
+  if (!isSeat(o.seat)) return null;
+  if (o.type === "answer")
+    return typeof o.yes === "boolean" ? { type: "answer", seat: o.seat, yes: o.yes } : null;
+  if (!isCell(o.cell)) return null;
   switch (o.type) {
     case "placeCube":
       return { type: "placeCube", seat: o.seat, cell: o.cell };
@@ -46,6 +49,9 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case "settings": {
       const out: ClientMessage = { t: "settings" };
       if (typeof o.hard === "boolean") out.hard = o.hard;
+      if (typeof o.setupCubes === "boolean") out.setupCubes = o.setupCubes;
+      if (typeof o.penaltyCube === "boolean") out.penaltyCube = o.penaltyCube;
+      if (typeof o.manualAnswers === "boolean") out.manualAnswers = o.manualAnswers;
       if (o.assist === "off" || o.assist === "normal" || o.assist === "full") out.assist = o.assist;
       return out;
     }

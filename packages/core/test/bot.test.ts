@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BANK, bankKey } from "../src/bank";
 import { botAction } from "../src/bot";
-import { newGame, reduce } from "../src/game";
+import { currentActor, newGame, reduce } from "../src/game";
 import { clueCountFor, generate, seatClues } from "../src/generator";
 import { oracleFromClues } from "../src/oracle";
 import { Rng } from "../src/rng";
@@ -15,7 +15,7 @@ function playBots(seed: number, players: number, hard: boolean) {
   let state = newGame(players);
   let steps = 0;
   while (state.phase !== "finished") {
-    const seat = state.pendingCube ?? state.turn;
+    const seat = currentActor(state) as number;
     const action = botAction(
       state,
       seat,

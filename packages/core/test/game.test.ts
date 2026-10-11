@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { type GameState, newGame, type Oracle, reduce } from "../src/game";
+import {
+  currentActor,
+  DEFAULT_OPTIONS,
+  type GameState,
+  newGame,
+  type Oracle,
+  reduce,
+} from "../src/game";
+
+const AUTO = { ...DEFAULT_OPTIONS, manualAnswers: false };
 
 /** Seat s accepts cells where cell % (s + 2) === 0; cell 0 is accepted by everyone. */
 const oracle: Oracle = (seat, cell) => cell % (seat + 2) === 0;
@@ -11,7 +20,7 @@ function apply(state: GameState, action: Parameters<typeof reduce>[1]): GameStat
 }
 
 function playingState(seats = 3): GameState {
-  let s = newGame(seats);
+  let s = newGame(seats, AUTO);
   // Setup: each seat places 2 cubes on rejected cells, in turn order.
   for (let round = 0; round < 2; round++) {
     for (let seat = 0; seat < seats; seat++) {
@@ -24,7 +33,7 @@ function playingState(seats = 3): GameState {
 
 describe("setup", () => {
   it("requires cubes on rejected cells, in turn order, then starts play", () => {
-    const s0 = newGame(3);
+    const s0 = newGame(3, AUTO);
     expect(s0.phase).toBe("setup");
     expect(reduce(s0, { type: "placeCube", seat: 1, cell: 1 }, oracle).ok).toBe(false);
     expect(reduce(s0, { type: "placeCube", seat: 0, cell: 2 }, oracle).ok).toBe(false); // accepted cell
@@ -93,5 +102,56 @@ describe("search", () => {
     const snapshot = JSON.stringify(before);
     apply(before, { type: "ask", seat: 0, target: 1, cell: 9 });
     expect(JSON.stringify(before)).toBe(snapshot);
+  });
+});
+
+describe("house rules", () => {
+  it("no setup cubes starts in play; no penalty cube just passes the turn", () => {
+    const s0 = newGame(3, { setupCubes: 0, penaltyCube: false, manualAnswers: false });
+    expect(s0.phase).toBe("playing");
+    expect(s0.pendingCube).toBeNull();
+    const s1 = apply(s0, { type: "ask", seat: 0, target: 1, cell: 10 }); // 10 % 3 !== 0 → NO
+    expect(s1.markers.at(-1)).toEqual({ cell: 10, seat: 1, kind: "cube" });
+    expect(s1.pendingCube).toBeNull();
+    expect(s1.turn).toBe(1);
+  });
+
+  it("manual answers: the target must answer, honestly, before play continues", () => {
+    const s0 = newGame(3, { setupCubes: 0, penaltyCube: true, manualAnswers: true });
+    const s1 = apply(s0, { type: "ask", seat: 0, target: 1, cell: 9 });
+    expect(s1.pending).toEqual({ type: "ask", asker: 0, target: 1, cell: 9 });
+    expect(currentActor(s1)).toBe(1);
+    expect(s1.markers.length).toBe(0);
+    expect(reduce(s1, { type: "ask", seat: 1, target: 0, cell: 4 }, oracle).ok).toBe(false);
+    expect(reduce(s1, { type: "answer", seat: 0, yes: true }, oracle)).toMatchObject({
+      ok: false,
+      error: "nothing_to_answer",
+    });
+    expect(reduce(s1, { type: "answer", seat: 1, yes: false }, oracle)).toMatchObject({
+      ok: false,
+      error: "wrong_answer",
+    });
+    const s2 = apply(s1, { type: "answer", seat: 1, yes: true });
+    expect(s2.pending).toBeNull();
+    expect(s2.markers.at(-1)).toEqual({ cell: 9, seat: 1, kind: "disc" });
+    expect(s2.turn).toBe(1);
+  });
+
+  it("manual answers: a search walks the table one responder at a time", () => {
+    const s0 = newGame(3, { setupCubes: 0, penaltyCube: true, manualAnswers: true });
+    let s = apply(s0, { type: "search", seat: 0, cell: 12 }); // everyone accepts 12
+    expect(s.pending).toEqual({ type: "search", searcher: 0, cell: 12, responder: 1 });
+    s = apply(s, { type: "answer", seat: 1, yes: true });
+    expect(s.pending).toEqual({ type: "search", searcher: 0, cell: 12, responder: 2 });
+    s = apply(s, { type: "answer", seat: 2, yes: true });
+    expect(s.phase).toBe("finished");
+    expect(s.winner).toBe(0);
+
+    let f = apply(s0, { type: "search", seat: 0, cell: 6 }); // seat 2 rejects 6
+    f = apply(f, { type: "answer", seat: 1, yes: true });
+    f = apply(f, { type: "answer", seat: 2, yes: false });
+    expect(f.phase).toBe("playing");
+    expect(f.pendingCube).toBe(0);
+    expect(f.history.at(-1)).toEqual({ type: "searched", seat: 0, cell: 6, stoppedBy: 2 });
   });
 });

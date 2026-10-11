@@ -353,15 +353,26 @@ input::placeholder {
 .hexmap.interactive .hex {
   cursor: pointer;
 }
-.hexmap .hex.sel .tile {
-  stroke: var(--coral);
-  stroke-width: 3.5;
-  filter: brightness(1.1);
+.hexmap .overlay .hit {
+  pointer-events: all;
 }
-.hexmap .hex.glow .tile {
+.hexmap .hex .ring {
+  pointer-events: none;
+  stroke-linejoin: round;
+}
+.hexmap .hex.glow .ring {
   stroke: var(--sun);
   stroke-width: 3.5;
   animation: glow 1.2s ease-in-out infinite alternate;
+}
+.hexmap .hex.sel .ring {
+  stroke: var(--coral);
+  stroke-width: 3.5;
+}
+.hexmap .hex.ask .ring {
+  stroke: #fff;
+  stroke-width: 4;
+  animation: ask-pulse 0.9s ease-in-out infinite alternate;
 }
 .hex-in {
   animation: hex-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -811,6 +822,16 @@ input::placeholder {
     opacity: 0.5;
   }
 }
+@keyframes ask-pulse {
+  from {
+    stroke: #ffffff;
+    stroke-width: 3;
+  }
+  to {
+    stroke: var(--coral);
+    stroke-width: 5;
+  }
+}
 @keyframes glow {
   from {
     opacity: 0.8;
@@ -911,4 +932,52 @@ input::placeholder {
 .center-row {
   text-align: center;
   margin-top: 8px;
+}
+
+/* Answer prompt */
+.answer-card {
+  background: var(--paper);
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin: 12px 0;
+  box-shadow: var(--shadow);
+  animation: slide-in 0.25s ease both;
+  text-align: center;
+}
+.answer-card h3 {
+  margin-bottom: 10px;
+}
+.answer-card .row {
+  justify-content: center;
+}
+.answer-card .btn {
+  min-width: 120px;
+  font-size: 1.2rem;
+}
+.btn.yes {
+  background: var(--sea);
+  color: #063b36;
+}
+.btn.no {
+  background: var(--coral);
+  color: #fff;
+}
+.status.answer {
+  color: var(--coral-deep);
+  animation: pulse 1.1s ease-in-out infinite;
+}
+.house {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+}
+.legend.grid {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+.legend .icons {
+  display: flex;
+  gap: 6px;
 }

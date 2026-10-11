@@ -1,4 +1,4 @@
-import { COLORS, STRUCTURE_KINDS, TERRAINS, TERRITORIES } from "@shiny/core";
+import { COLORS, TERRAINS, TERRITORIES } from "@shiny/core";
 import { colorName, structureName, t, terrainName, territoryName } from "../i18n";
 import { STRUCT_FILL, TERRAIN_FILL } from "./HexMap";
 import { MapDefs } from "./MapDefs";
@@ -79,16 +79,23 @@ export function Rules(p: { hard: boolean; onClose: () => void }) {
         </ul>
 
         <h3>{t("rules.structures")}</h3>
-        <ul class="legend">
-          {STRUCTURE_KINDS.map((k) => (
-            <li key={k}>
-              <Icon href={k === "kiosk" ? "#s-kiosk" : "#s-tent"} color="#2457ff" />{" "}
-              {structureName(k)}
-            </li>
-          ))}
+        <ul class="legend grid">
+          <li>
+            <span class="icons">
+              <Icon href="#s-kiosk" color="#9aa3ad" />
+              <Icon href="#s-tent" color="#9aa3ad" />
+            </span>
+            <span class="muted">
+              {structureName("kiosk")} + {structureName("tent")}
+            </span>
+          </li>
           {COLORS.slice(0, p.hard ? 4 : 3).map((c) => (
             <li key={c}>
-              <span class="colordot" style={`background:${STRUCT_FILL[c]}`} /> {colorName(c)}
+              <span class="icons">
+                <Icon href="#s-kiosk" color={STRUCT_FILL[c]} />
+                <Icon href="#s-tent" color={STRUCT_FILL[c]} />
+              </span>
+              <span>{colorName(c)}</span>
             </li>
           ))}
         </ul>
@@ -108,6 +115,7 @@ export function Rules(p: { hard: boolean; onClose: () => void }) {
           {p.hard && <li>{t("rules.c7")}</li>}
         </ul>
         <p class="muted">{t("rules.tip")}</p>
+        <p class="muted">{t("rules.house")}</p>
       </section>
     </div>
   );

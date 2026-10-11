@@ -146,6 +146,13 @@ export function botAction(state: GameState, seat: number, ctx: BotContext, rng: 
   const hyps = hypotheses(ctx);
   const mine = state.markers.filter((m) => m.seat === seat);
 
+  // Someone asked me (or is searching past me): answer honestly from my own clue.
+  if (state.pending) {
+    const p = state.pending;
+    const responder = p.type === "ask" ? p.target : p.responder;
+    if (responder === seat) return { type: "answer", seat, yes: myMask[p.cell] === true };
+  }
+
   // Cube owed (setup or penalty): reject a cell, revealing as little as possible about my clue.
   if (state.pendingCube === seat) {
     const selfHyps = consistentWith(hyps, mine);

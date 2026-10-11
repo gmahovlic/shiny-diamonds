@@ -10,6 +10,7 @@ import {
   type ClientMessage,
   type Clue,
   clueCountFor,
+  currentActor,
   type ErrorCode,
   type GameEvent,
   type GameState,
@@ -30,6 +31,7 @@ import {
   type RoomSettings,
   type RoomView,
   reduce,
+  SETUP_CUBES,
   type ServerMessage,
   seatClues,
 } from "@shiny/core";
@@ -74,7 +76,13 @@ export function newRoomState(code: string, now: number): RoomState {
     code,
     phase: "lobby",
     hostId: null,
-    settings: { hard: false, assist: "normal" },
+    settings: {
+      hard: false,
+      assist: "normal",
+      setupCubes: true,
+      penaltyCube: true,
+      manualAnswers: true,
+    },
     members: [],
     puzzle: null,
     seatOwners: [],
@@ -134,6 +142,8 @@ export class Room {
       phase: game.phase,
       turn: game.turn,
       pendingCube: game.pendingCube,
+      pending: game.pending,
+      options: game.options,
       markers: game.markers,
       winner: game.winner,
       solution: finished ? puzzle.solution : null,
@@ -298,6 +308,9 @@ export class Room {
         if (!isHost) return this.error(memberId, "host_only");
         if (s.phase !== "lobby") return this.error(memberId, "game_started");
         if (typeof msg.hard === "boolean") s.settings.hard = msg.hard;
+        if (typeof msg.setupCubes === "boolean") s.settings.setupCubes = msg.setupCubes;
+        if (typeof msg.penaltyCube === "boolean") s.settings.penaltyCube = msg.penaltyCube;
+        if (typeof msg.manualAnswers === "boolean") s.settings.manualAnswers = msg.manualAnswers;
         if (msg.assist && ASSIST.includes(msg.assist)) s.settings.assist = msg.assist;
         return { outbound: this.broadcast(), botDueIn: null };
       }
@@ -360,7 +373,11 @@ export class Room {
     s.puzzle = puzzle;
     s.seatOwners = seatOrder.map((m) => m.id);
     s.seatCluesList = seatClues(puzzle, players.length);
-    s.game = newGame(players.length);
+    s.game = newGame(players.length, {
+      setupCubes: s.settings.setupCubes ? SETUP_CUBES : 0,
+      penaltyCube: s.settings.penaltyCube,
+      manualAnswers: s.settings.manualAnswers,
+    });
     s.phase = "playing";
 
     const outbound: Outbound[] = [...this.broadcast()];
@@ -385,11 +402,10 @@ export class Room {
     return { outbound: this.broadcast(r.events), botDueIn: this.botDueIn() };
   }
 
-  /** Seat index that must act next, or null. */
+  /** Seat index that must act next (answer, cube or turn), or null. */
   private actor(): number | null {
     const g = this.state.game;
-    if (!g || g.phase === "finished") return null;
-    return g.pendingCube ?? g.turn;
+    return g ? currentActor(g) : null;
   }
 
   /** Milliseconds until the seat that must act (a bot) should move, or null if a human is up. */

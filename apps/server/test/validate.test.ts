@@ -30,5 +30,22 @@ describe("parseClientMessage", () => {
       parseClientMessage('{"t":"action","action":{"type":"ask","seat":0,"cell":1}}'),
     ).toBeNull();
     expect(parseClientMessage('{"t":"setName","name":5}')).toBeNull();
+    expect(parseClientMessage('{"t":"action","action":{"type":"answer","seat":1}}')).toBeNull();
+  });
+
+  it("accepts answers and house-rule settings", () => {
+    expect(
+      parseClientMessage('{"t":"action","action":{"type":"answer","seat":1,"yes":false}}'),
+    ).toEqual({
+      t: "action",
+      action: { type: "answer", seat: 1, yes: false },
+    });
+    expect(parseClientMessage('{"t":"settings","manualAnswers":false,"setupCubes":false}')).toEqual(
+      {
+        t: "settings",
+        manualAnswers: false,
+        setupCubes: false,
+      },
+    );
   });
 });

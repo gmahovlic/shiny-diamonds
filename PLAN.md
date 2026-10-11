@@ -150,10 +150,11 @@ Partidas só de bots duram ~10–20 ações, parecido com mesa real.
 host dá start → DO sorteia seed, manda estado público pra todos e a pista privada pra cada
 jogador → rodadas (perguntar / procurar) → DO revela → placar → nova partida mesma sala.
 
-**Respostas automáticas:** como o DO conhece todas as pistas, ele responde sozinho
-("perguntar" e "procurar" resolvem na hora, sem esperar o outro jogador clicar). Zero
-espera, zero erro honesto, e o reducer de regras (`packages/core/game.ts`) recebe só um
-`oracle(seat, cell)`.
+**Respostas:** regra da casa. Com "resposta manual" (padrão) a pergunta fica pendente,
+o hex pulsa pra todo mundo (TV inclusa) e quem foi perguntado responde SIM/NÃO no
+celular; o servidor confere com o `oracle(seat, cell)` e recusa resposta errada. Bots
+respondem sozinhos. Com resposta automática o DO resolve na hora. Também opcionais:
+cubos iniciais e cubo de penalidade após um NÃO.
 
 **Protocolo:** JSON, mensagens tipadas em `packages/core/protocol.ts` compartilhadas
 entre cliente e servidor (sem gerar código, só tipos). Toda mensagem que chega é

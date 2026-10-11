@@ -1,4 +1,4 @@
-import { botAction, type Clue, type ServerMessage } from "@shiny/core";
+import { botAction, type Clue, currentActor, type ServerMessage } from "@shiny/core";
 import { describe, expect, it } from "vitest";
 import { BOT_DELAY_MS, newRoomState, type Outbound, Room } from "../src/room";
 
@@ -77,7 +77,7 @@ describe("lobby", () => {
     const room = makeRoom();
     const a = join(room, "Ana");
     room.handle(a.id, { t: "settings", hard: true, assist: "full" }, 1);
-    expect(room.view().settings).toEqual({ hard: true, assist: "full" });
+    expect(room.view().settings).toMatchObject({ hard: true, assist: "full" });
     room.handle(a.id, { t: "settings", assist: "nope" as "off" }, 1);
     expect(room.view().settings.assist).toBe("full");
   });
@@ -157,6 +157,7 @@ describe("game", () => {
       } else {
         const g = room.state.game;
         const seat = room.view().members.find((m) => m.id === me.id)?.seat as number;
+        expect(currentActor(g as NonNullable<typeof g>)).toBe(seat);
         const action = botAction(
           g as NonNullable<typeof g>,
           seat,

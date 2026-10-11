@@ -63,11 +63,76 @@ export interface HexMapProps {
   dimmed?: ReadonlySet<Cell> | undefined;
   /** Cells to highlight (assist: certain). */
   glow?: ReadonlySet<Cell> | undefined;
+  /** Cell a question or search is waiting on (pulses for everyone). */
+  pending?: Cell | null | undefined;
   notes?: Record<number, Note> | undefined;
   solution?: Cell | null;
   onCell?: ((c: Cell) => void) | undefined;
   intro?: boolean;
   class?: string;
+}
+
+const SOLID_FILL: Record<Terrain, string> = {
+  sea: "#2d9bd3",
+  sand: "#f3d58a",
+  palms: "#3f9a5f",
+  boardwalk: "#e6e2d8",
+  street: "#55595f",
+};
+
+/**
+ * Terrain is drawn in its own layer whose nodes never change during a game. WebKit drops
+ * pattern fills on SVG nodes that get re-rendered, so selection, dimming and notes live in a
+ * separate overlay layer above it (which also keeps highlight strokes above neighbours).
+ */
+function TerrainLayer(p: { map: BeachMap; intro: boolean }) {
+  const sym = R * 1.3;
+  return (
+    <g class="terrain">
+      {p.map.terrain.map((t, c) => {
+        const [x, y] = hexCenter(c);
+        const terr = p.map.territory[c];
+        return (
+          <g key={c} transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}>
+            <g
+              class={p.intro ? "hex-in" : undefined}
+              style={
+                p.intro
+                  ? `animation-delay:${(c % COLS) * 35 + Math.floor(c / COLS) * 25}ms`
+                  : undefined
+              }
+            >
+              <polygon points={HEX_POINTS} fill={SOLID_FILL[t]} class="tile-base" />
+              <polygon points={HEX_POINTS} fill={TERRAIN_FILL[t]} class="tile" />
+              {t === "palms" && (
+                <use href="#s-palm" x={-sym / 2} y={-sym / 2 - 2} width={sym} height={sym} />
+              )}
+              {terr && (
+                <>
+                  <polygon
+                    points={HEX_POINTS}
+                    transform="scale(0.82)"
+                    fill="none"
+                    stroke={terr === "gulls" ? "#ffffff" : "#ff4d4d"}
+                    stroke-width={2.2}
+                    stroke-dasharray="4 3"
+                    class="territory"
+                  />
+                  <use
+                    href={terr === "gulls" ? "#s-gull" : "#s-crab"}
+                    x={-R * 0.42}
+                    y={-R * 0.42}
+                    width={R * 0.84}
+                    height={R * 0.84}
+                  />
+                </>
+              )}
+            </g>
+          </g>
+        );
+      })}
+    </g>
+  );
 }
 
 export function HexMap(p: HexMapProps) {
@@ -78,7 +143,6 @@ export function HexMap(p: HexMapProps) {
     else byCell.set(m.cell, [m]);
   }
   const cells = Array.from({ length: COLS * ROWS }, (_, i) => i);
-  const sym = R * 1.3;
 
   return (
     <svg
@@ -89,86 +153,7 @@ export function HexMap(p: HexMapProps) {
     >
       <title>Mapa da praia</title>
       <MapDefs />
-      <g class="terrain">
-        {cells.map((c) => {
-          const [x, y] = hexCenter(c);
-          const t = p.map.terrain[c] as Terrain;
-          const terr = p.map.territory[c];
-          const dim = p.dimmed?.has(c);
-          const sel = p.selected === c;
-          const glow = p.glow?.has(c);
-          return (
-            // biome-ignore lint/a11y/noStaticElementInteractions: SVG <g> is the only hit target; role/tabIndex/keyboard are set when interactive.
-            <g
-              key={c}
-              transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
-              class={`hex ${sel ? "sel" : ""} ${glow ? "glow" : ""}`}
-              role={p.onCell ? "gridcell" : undefined}
-              tabIndex={p.onCell ? 0 : undefined}
-              onClick={p.onCell ? () => p.onCell?.(c) : undefined}
-              onKeyDown={
-                p.onCell ? (e) => (e.key === "Enter" || e.key === " ") && p.onCell?.(c) : undefined
-              }
-            >
-              <g
-                class={p.intro ? "hex-in" : undefined}
-                style={
-                  p.intro
-                    ? `animation-delay:${(c % COLS) * 35 + Math.floor(c / COLS) * 25}ms`
-                    : undefined
-                }
-              >
-                <polygon points={HEX_POINTS} fill={TERRAIN_FILL[t]} class="tile" />
-                {t === "palms" && (
-                  <use href="#s-palm" x={-sym / 2} y={-sym / 2 - 2} width={sym} height={sym} />
-                )}
-                {terr && (
-                  <>
-                    <polygon
-                      points={HEX_POINTS}
-                      transform="scale(0.82)"
-                      fill="none"
-                      stroke={terr === "gulls" ? "#ffffff" : "#ff4d4d"}
-                      stroke-width={2.2}
-                      stroke-dasharray="4 3"
-                      class="territory"
-                    />
-                    <use
-                      href={terr === "gulls" ? "#s-gull" : "#s-crab"}
-                      x={-R * 0.42}
-                      y={-R * 0.42}
-                      width={R * 0.84}
-                      height={R * 0.84}
-                    />
-                  </>
-                )}
-                {dim && <polygon points={HEX_POINTS} fill="#06131b" opacity="0.72" class="dim" />}
-                {p.notes?.[c] === 1 && (
-                  <path
-                    d={`M${-R * 0.4} ${-R * 0.4} L${R * 0.4} ${R * 0.4} M${R * 0.4} ${-R * 0.4} L${-R * 0.4} ${R * 0.4}`}
-                    stroke="#ff3b3b"
-                    stroke-width="3.5"
-                    stroke-linecap="round"
-                  />
-                )}
-                {p.notes?.[c] === 2 && (
-                  <text
-                    y={R * 0.32}
-                    text-anchor="middle"
-                    font-size={R * 0.95}
-                    font-weight="800"
-                    fill="#ffd166"
-                    stroke="#0b2a3b"
-                    stroke-width="0.8"
-                  >
-                    ?
-                  </text>
-                )}
-              </g>
-            </g>
-          );
-        })}
-      </g>
+      <TerrainLayer map={p.map} intro={p.intro ?? false} />
       <g class="structures">
         {p.map.structures.map((s) => {
           const [x, y] = hexCenter(s.cell);
@@ -184,6 +169,58 @@ export function HexMap(p: HexMapProps) {
               style={`color:${STRUCT_FILL[s.color]}`}
               class="structure"
             />
+          );
+        })}
+      </g>
+      <g class="overlay">
+        {cells.map((c) => {
+          const [x, y] = hexCenter(c);
+          const dim = p.dimmed?.has(c);
+          const sel = p.selected === c;
+          const glow = p.glow?.has(c);
+          const ask = p.pending === c;
+          return (
+            // biome-ignore lint/a11y/noStaticElementInteractions: SVG <g> is the only hit target; role/tabIndex/keyboard are set when interactive.
+            <g
+              key={c}
+              transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
+              class={`hex ${sel ? "sel" : ""} ${glow ? "glow" : ""} ${ask ? "ask" : ""}`}
+              role={p.onCell ? "gridcell" : undefined}
+              tabIndex={p.onCell ? 0 : undefined}
+              onClick={p.onCell ? () => p.onCell?.(c) : undefined}
+              onKeyDown={
+                p.onCell ? (e) => (e.key === "Enter" || e.key === " ") && p.onCell?.(c) : undefined
+              }
+            >
+              <polygon
+                points={HEX_POINTS}
+                fill={dim ? "#06131b" : "transparent"}
+                opacity={dim ? 0.72 : 1}
+                class={dim ? "dim" : "hit"}
+              />
+              {p.notes?.[c] === 1 && (
+                <path
+                  d={`M${-R * 0.4} ${-R * 0.4} L${R * 0.4} ${R * 0.4} M${R * 0.4} ${-R * 0.4} L${-R * 0.4} ${R * 0.4}`}
+                  stroke="#ff3b3b"
+                  stroke-width="3.5"
+                  stroke-linecap="round"
+                />
+              )}
+              {p.notes?.[c] === 2 && (
+                <text
+                  y={R * 0.32}
+                  text-anchor="middle"
+                  font-size={R * 0.95}
+                  font-weight="800"
+                  fill="#ffd166"
+                  stroke="#0b2a3b"
+                  stroke-width="0.8"
+                >
+                  ?
+                </text>
+              )}
+              {(sel || glow || ask) && <polygon points={HEX_POINTS} fill="none" class="ring" />}
+            </g>
           );
         })}
       </g>

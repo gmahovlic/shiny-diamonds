@@ -1,5 +1,5 @@
 import { useSignal } from "@preact/signals";
-import { type Cell, cluePasses, type GameView, type RoomView } from "@shiny/core";
+import { type Cell, cluePasses, currentActor, type GameView, type RoomView } from "@shiny/core";
 import { useEffect, useMemo } from "preact/hooks";
 import { runAssist } from "../assist";
 import { HexInfo } from "../components/HexInfo";
@@ -32,15 +32,20 @@ export function Game(p: { room: RoomView; game: GameView }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const actor = game.phase === "finished" ? null : (game.pendingCube ?? game.turn);
-  const mode: "cube" | "act" | "wait" | "over" =
+  const actor = currentActor(game);
+  const pending = game.pending;
+  const mode: "answer" | "cube" | "act" | "wait" | "over" =
     game.phase === "finished"
       ? "over"
-      : game.pendingCube === seat
-        ? "cube"
-        : actor === seat
-          ? "act"
-          : "wait";
+      : pending && actor === seat
+        ? "answer"
+        : pending
+          ? "wait"
+          : game.pendingCube === seat
+            ? "cube"
+            : actor === seat
+              ? "act"
+              : "wait";
 
   // Close the popover when the turn state changes under us (e.g. after our action resolves).
   useEffect(() => {
@@ -82,6 +87,7 @@ export function Game(p: { room: RoomView; game: GameView }) {
       : undefined;
 
   const onCell = (c: Cell) => {
+    if (mode === "answer") return;
     selected.value = selected.value === c ? null : c;
   };
   const act = (action: Parameters<typeof send>[0]) => {
@@ -100,6 +106,9 @@ export function Game(p: { room: RoomView; game: GameView }) {
       <header class="topbar">
         <span class="code">{room.code}</span>
         <span class={`status ${mode}`}>
+          {mode === "answer" &&
+            pending &&
+            t("game.answerStatus", { cell: cellLabel(pending.cell) })}
           {mode === "cube" && t("game.cube")}
           {mode === "act" && (game.phase === "setup" ? t("game.setup") : t("game.yourTurn"))}
           {mode === "wait" &&
@@ -128,11 +137,12 @@ export function Game(p: { room: RoomView; game: GameView }) {
           dimmed={dimmed}
           glow={glow}
           notes={room.settings.assist === "off" ? undefined : notes.value}
+          pending={pending?.cell ?? null}
           solution={game.solution}
           onCell={onCell}
           intro
         />
-        {sel !== null && seat !== null && (
+        {sel !== null && seat !== null && mode !== "answer" && (
           <HexInfo
             game={game}
             cell={sel}
@@ -150,6 +160,42 @@ export function Game(p: { room: RoomView; game: GameView }) {
           />
         )}
       </div>
+
+      {mode === "answer" && pending && seat !== null && (
+        <section class="answer-card">
+          <h3>
+            {pending.type === "ask"
+              ? t("game.answerAsk", {
+                  name: game.seats[pending.asker]?.name ?? "?",
+                  cell: cellLabel(pending.cell),
+                })
+              : t("game.answerSearch", {
+                  name: game.seats[pending.searcher]?.name ?? "?",
+                  cell: cellLabel(pending.cell),
+                })}
+          </h3>
+          <div class="row">
+            <button
+              type="button"
+              class="btn yes"
+              onClick={() => act({ t: "action", action: { type: "answer", seat, yes: true } })}
+            >
+              {t("game.yes")}
+            </button>
+            <button
+              type="button"
+              class="btn no"
+              onClick={() => act({ t: "action", action: { type: "answer", seat, yes: false } })}
+            >
+              {t("game.no")}
+            </button>
+          </div>
+          <p class="small">
+            {myAccepts(pending.cell) ? "✅ " : "❌ "}
+            {myClues.map(clueText).join(" · ")}
+          </p>
+        </section>
+      )}
 
       {narration && <p class="narration">{narration}</p>}
 

@@ -1,9 +1,10 @@
-import type { GameView } from "@shiny/core";
+import { currentActor, type GameView } from "@shiny/core";
 import { t } from "../i18n";
 import { seatColor } from "../strings";
 
 export function Seats(p: { game: GameView; mySeat?: number | null; big?: boolean }) {
-  const actor = p.game.phase === "finished" ? null : (p.game.pendingCube ?? p.game.turn);
+  const actor = currentActor(p.game);
+  const answering = p.game.pending !== null;
   return (
     <ul class={`seats ${p.big ? "big" : ""}`}>
       {p.game.seats.map((s) => (
@@ -19,7 +20,11 @@ export function Seats(p: { game: GameView; mySeat?: number | null; big?: boolean
           </span>
           {actor === s.seat && (
             <span class="hint">
-              {p.game.pendingCube === s.seat ? t("seat.cubing") : t("seat.turn")}
+              {answering
+                ? t("seat.answering")
+                : p.game.pendingCube === s.seat
+                  ? t("seat.cubing")
+                  : t("seat.turn")}
             </span>
           )}
         </li>

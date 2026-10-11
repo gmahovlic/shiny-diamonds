@@ -13,7 +13,13 @@ export function TvGame(p: { room: RoomView; game: GameView }) {
   return (
     <main class="tvgame">
       <div class="map-col">
-        <HexMap map={game.map} markers={game.markers} solution={game.solution} intro />
+        <HexMap
+          map={game.map}
+          markers={game.markers}
+          pending={game.pending?.cell ?? null}
+          solution={game.solution}
+          intro
+        />
       </div>
       <aside class="side">
         <header class="codebar">

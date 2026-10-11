@@ -1,4 +1,4 @@
-import type { Action, GameEvent, Marker, Phase, RuleError } from "./game";
+import type { Action, GameEvent, GameOptions, Marker, Pending, Phase, RuleError } from "./game";
 import type { Cell } from "./hex";
 import type { BeachMap, Clue } from "./types";
 
@@ -18,6 +18,10 @@ export const CODE_ALPHABET = "ABCDEFGHJKLMNPRSTUVWXYZ";
 export interface RoomSettings {
   hard: boolean;
   assist: AssistLevel;
+  /** House rules. */
+  setupCubes: boolean;
+  penaltyCube: boolean;
+  manualAnswers: boolean;
 }
 
 export interface MemberView {
@@ -43,6 +47,8 @@ export interface GameView {
   phase: Phase;
   turn: number;
   pendingCube: number | null;
+  pending: Pending | null;
+  options: GameOptions;
   markers: Marker[];
   winner: number | null;
   /** Revealed only when the game is finished. */
@@ -64,7 +70,14 @@ export type ClientMessage =
   | { t: "setName"; name: string }
   | { t: "addBot" }
   | { t: "removeMember"; id: string }
-  | { t: "settings"; hard?: boolean; assist?: AssistLevel }
+  | {
+      t: "settings";
+      hard?: boolean;
+      assist?: AssistLevel;
+      setupCubes?: boolean;
+      penaltyCube?: boolean;
+      manualAnswers?: boolean;
+    }
   | { t: "start" }
   | { t: "action"; action: Action }
   | { t: "rematch" }
