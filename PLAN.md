@@ -1,7 +1,9 @@
-# Monsterous — Plano (v0, só pensando, sem código ainda)
+# Shiny Diamonds — Plano
 
-Party game de dedução no estilo "ache o monstro no mapa de hexágonos": cada jogador
-recebe uma pista secreta, o mapa + pistas são gerados automaticamente com **uma única
+> Nome de trabalho anterior: Monsterous (nome do repo/branch). O jogo se chama **Shiny Diamonds**.
+
+Party game de dedução no estilo "ache o tesouro no mapa de hexágonos": um diamante está
+escondido numa praia, cada jogador recebe uma pista secreta, o mapa + pistas são gerados automaticamente com **uma única
 solução**, todo mundo joga pelo celular/PC e a TV pode entrar na sala só como **display**
 do mapa.
 
@@ -192,7 +194,7 @@ Onde vale:
 - Indicador de turno pulsando no jogador da vez (TV e celular).
 - Auto-eliminação: hexes apagando em cascata quando a dedução assistida corta.
 - **Reveal final como cena** na TV: pista por pista, hexes caindo, última célula brilha,
-  monstro aparece. Momento party game.
+  diamante aparece brilhando. Momento party game.
 - Intro do mapa montando hex por hex.
 - Feedback de busca falha: shake + cubo preto.
 
@@ -230,30 +232,36 @@ monsterous/
 
 ---
 
-## 7. Decisões em aberto (pra bater antes de codar)
+## 7. Decisões fechadas de design
 
-- Nº de jogadores suportado (3–5 como o original? 2 com pista dupla? até 6?).
-- Tamanho/forma do mapa e quantos tipos de terreno/estrutura — define a dificuldade e
-  quão "diferente" o jogo parece.
-- Modo difícil com pistas negativas desde o começo ou depois.
-- Identidade visual (tema, paleta) — influencia o SVG desde o primeiro commit.
-- `partyserver` vs DO cru.
+| Item | Decisão |
+|---|---|
+| Jogadores | **2 a 5**. Com 3–5, uma pista por jogador. Com **2, cada um segura 2 pistas** e responde pela combinação (default; ajustar testando). |
+| Tema | **Praia / caça ao tesouro.** O alvo é um diamante escondido. |
+| Terrenos (5) | **mar, areia, palmeiras, calçada, rua** (grama descartada pra manter 5 tipos) |
+| Territórios (2) | **gaivotas** e **caranguejos** (áreas contornadas no mapa) |
+| Estruturas (2 tipos) | **quiosques** e **barracas**, em 4 cores; a 4ª cor só no modo difícil |
+| Mapa | 12 × 9 = 108 hexes, gerado inteiro (sem peças); gerador cria biomas em blocos pra parecer praia |
+| Pistas | Mesmas famílias do original, com texto próprio: a até N de terreno X / de território / de tipo de estrutura / de cor de estrutura; "em A ou B"; negativas no modo difícil |
+| Identidade visual | Paleta solar (azul-mar, areia, verde-palmeira, cinza-calçada, asfalto), tipografia arredondada, peças = diamantes/conchas |
+
+**Ainda em aberto (decide na implementação):** `partyserver` vs DO cru; quantidade
+exata de estruturas por cor e tamanho mínimo de bioma (vai sair do tuning do gerador).
 
 ---
 
 ## 8. Setup fora do código (checklist)
 
 **Antes do primeiro deploy (fase 2):**
-- [ ] Conta Cloudflare (free, sem cartão) + ativar subdomínio `*.workers.dev`.
-- [ ] Anotar o Account ID.
-- [ ] API Token com template "Edit Cloudflare Workers".
-- [ ] Secrets no GitHub Actions: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
+- [x] Conta Cloudflare (free, sem cartão) + ativar subdomínio `*.workers.dev`.
+- [x] Anotar o Account ID.
+- [x] API Token com template "Edit Cloudflare Workers".
+- [x] Secrets no GitHub Actions: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
 
 **Máquina local:** Node 20+, pnpm (`corepack enable`), `wrangler login` (opcional).
 
 **Opcional / depois:** domínio próprio (Cloudflare Registrar), Cloudflare Web
 Analytics (token no index), Sentry.
 
-**Antes de começar o `core` (fase 1):** responder as decisões da seção 7 — faixa de
-jogadores, tamanho do mapa / nº de terrenos e estruturas, tema visual. O core é TS
-puro e não depende de nada da Cloudflare.
+**Status:** Cloudflare + secrets configurados. Decisões de design fechadas (seção 7).
+Pronto pra fase 0/1.
