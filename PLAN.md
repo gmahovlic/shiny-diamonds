@@ -178,6 +178,33 @@ pra trapacear.
 
 ---
 
+## 4c. Animações
+
+Sem lib pesada: **SVG + CSS transitions/keyframes + Web Animations API**. Se precisar
+orquestrar sequência (reveal), `motion` (versão mini, ~3 KB). Framer Motion e GSAP
+estouram o orçamento de bundle.
+
+**Regra pra TV:** animar só `transform` e `opacity` (GPU). Nada de `filter`, sombras
+animadas ou centenas de nós mexendo juntos.
+
+Onde vale:
+- Peça caindo no hex (squash/bounce) + highlight do hex jogado.
+- Indicador de turno pulsando no jogador da vez (TV e celular).
+- Auto-eliminação: hexes apagando em cascata quando a dedução assistida corta.
+- **Reveal final como cena** na TV: pista por pista, hexes caindo, última célula brilha,
+  monstro aparece. Momento party game.
+- Intro do mapa montando hex por hex.
+- Feedback de busca falha: shake + cubo preto.
+
+Regras:
+- `prefers-reduced-motion` respeitado; toggle na sala: cheia / leve / off.
+- **Servidor nunca espera animação.** Estado chega, cada cliente anima a diferença
+  entre estado antigo e novo no próprio ritmo. Celular lento não trava a sala.
+- Animações viram parte do design desde o primeiro componente do mapa (não é polish
+  de última hora) — mas a cena de reveal é fase 4.
+
+---
+
 ## 5. Estrutura do repo (pnpm workspaces)
 
 ```
