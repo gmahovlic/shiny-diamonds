@@ -145,6 +145,39 @@ entre cliente e servidor (sem gerar código, só tipos).
 
 ---
 
+## 4b. Tela do jogador e ferramentas auxiliares
+
+**Cada jogador vê o mapa completo** no celular: é o mesmo componente SVG da TV, em modo
+interativo. O DO faz broadcast do estado público (mapa, estruturas, cubos/discos jogados,
+de quem é a vez) pra todos; a TV só não recebe a pista privada. Zoom/pan por gesto pra
+tela pequena.
+
+**Ferramentas, em duas camadas:**
+
+1. **Anotações privadas — só no cliente, custo zero no servidor**
+   - Marcar hex como "impossível / possível / dúvida".
+   - Notas por oponente ("Bia não é floresta", "Léo talvez seja pedra ≤ 2").
+   - Histórico das jogadas da partida (quem pôs o quê onde).
+   - Salvo em localStorage por `sala+assento`. Opcional: sync pro DO junto com o
+     `seatToken` (poucos bytes) pra sobreviver a troca de aparelho.
+
+2. **Dedução assistida — roda no cliente usando `packages/core`**
+   - Todo cubo/disco jogado é informação pública, então o solver calcula pra cada
+     oponente **quais tipos de pista ainda são compatíveis** com o que ele jogou.
+   - Com isso dá pra pintar o mapa: "pelas pistas possíveis dos outros, estes hexes já
+     caíram". Isso é exatamente o que um jogador experiente faz na cabeça.
+   - Níveis configuráveis pelo host na sala:
+     - **Hardcore:** nada, só o mapa.
+     - **Normal:** anotações manuais + histórico + lista de pistas possíveis por oponente.
+     - **Casual/família:** auto-eliminação completa com destaque no mapa.
+   - Nada disso toca o servidor; é tudo cálculo local em cima do estado que já chega.
+
+Regra de ouro: ferramentas nunca revelam informação que não seja pública. O cliente
+só conhece a própria pista + o estado público, então mesmo abrindo o devtools não dá
+pra trapacear.
+
+---
+
 ## 5. Estrutura do repo (pnpm workspaces)
 
 ```
