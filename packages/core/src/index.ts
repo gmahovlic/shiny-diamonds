@@ -1,4 +1,5 @@
 export * from "./bank";
+export * from "./bot";
 export * from "./clues";
 export * from "./game";
 export * from "./generator";

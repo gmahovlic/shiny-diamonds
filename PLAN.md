@@ -135,8 +135,16 @@ TV (display)┘                          ├─ banco de seeds (asset estático)
                                        └─ alarm: limpa sala ociosa
 ```
 
-**Papéis:** `host` (criou a sala, inicia o jogo), `player`, `display` (TV; só recebe).
-Vários displays por sala são permitidos.
+**Papéis:** `host` (criou a sala, inicia o jogo), `player`, `display` (TV; só recebe),
+`bot`. Vários displays por sala são permitidos.
+
+**Bots:** o host pode adicionar bots no lobby (até completar 5 assentos) pra testar
+sozinho ou preencher mesa. O cérebro (`packages/core/bot.ts`) joga com a mesma
+informação de um humano: a própria pista + marcadores públicos. Ele mantém, por
+oponente, o conjunto de pistas do catálogo ainda compatíveis com os discos/cubos
+daquele oponente, pergunta o que melhor divide esse conjunto, e procura quando tem
+certeza. O DO executa a jogada do bot com um pequeno delay pra animação acompanhar.
+Partidas só de bots duram ~10–20 ações, parecido com mesa real.
 
 **Fluxo:** host cria sala → código `ABCD` + QR → galera entra → TV abre `/tv/ABCD` →
 host dá start → DO sorteia seed, manda estado público pra todos e a pista privada pra cada
