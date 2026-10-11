@@ -79,26 +79,21 @@ export function Rules(p: { hard: boolean; onClose: () => void }) {
         </ul>
 
         <h3>{t("rules.structures")}</h3>
-        <ul class="legend grid">
-          <li>
-            <span class="icons">
-              <Icon href="#s-kiosk" color="#9aa3ad" />
-              <Icon href="#s-tent" color="#9aa3ad" />
-            </span>
-            <span class="muted">
-              {structureName("kiosk")} + {structureName("tent")}
-            </span>
-          </li>
-          {COLORS.slice(0, p.hard ? 4 : 3).map((c) => (
-            <li key={c}>
-              <span class="icons">
-                <Icon href="#s-kiosk" color={STRUCT_FILL[c]} />
-                <Icon href="#s-tent" color={STRUCT_FILL[c]} />
-              </span>
-              <span>{colorName(c)}</span>
-            </li>
+        <div class="structs">
+          {(["kiosk", "tent"] as const).map((k) => (
+            <div key={k} class="col">
+              <h4>{structureName(k)}</h4>
+              <ul>
+                {COLORS.slice(0, p.hard ? 4 : 3).map((c) => (
+                  <li key={c}>
+                    <Icon href={k === "kiosk" ? "#s-kiosk" : "#s-tent"} color={STRUCT_FILL[c]} />
+                    <span>{colorName(c)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
         <p class="muted">
           {t("rules.oneEach")}
           {p.hard ? t("rules.blackHard") : ""}

@@ -178,6 +178,7 @@ export function Game(p: { room: RoomView; game: GameView }) {
             <button
               type="button"
               class="btn yes"
+              disabled={!myAccepts(pending.cell)}
               onClick={() => act({ t: "action", action: { type: "answer", seat, yes: true } })}
             >
               {t("game.yes")}
@@ -185,6 +186,7 @@ export function Game(p: { room: RoomView; game: GameView }) {
             <button
               type="button"
               class="btn no"
+              disabled={myAccepts(pending.cell)}
               onClick={() => act({ t: "action", action: { type: "answer", seat, yes: false } })}
             >
               {t("game.no")}
