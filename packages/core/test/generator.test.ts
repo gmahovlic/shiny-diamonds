@@ -3,7 +3,7 @@ import { BANK, bankKey } from "../src/bank";
 import { clueId, solve } from "../src/clues";
 import { clueCountFor, generate, seatClues } from "../src/generator";
 import { CELLS } from "../src/hex";
-import { generateMap } from "../src/mapgen";
+import { generateMap, patchCount } from "../src/mapgen";
 import { Rng } from "../src/rng";
 import { colorsInPlay, TERRAINS } from "../src/types";
 
@@ -11,8 +11,12 @@ describe("generateMap", () => {
   it("fills every cell, places all structures off the sea", () => {
     const map = generateMap(new Rng(3), true);
     expect(map.terrain.length).toBe(CELLS);
-    for (const t of TERRAINS)
-      expect(map.terrain.filter((x) => x === t).length).toBeGreaterThanOrEqual(10);
+    for (const t of TERRAINS) {
+      const n = map.terrain.filter((x) => x === t).length;
+      expect(n).toBeGreaterThanOrEqual(16);
+      expect(n).toBeLessThanOrEqual(28);
+      expect(patchCount(map.terrain, t)).toBeGreaterThanOrEqual(2);
+    }
     expect(map.structures.length).toBe(colorsInPlay(true).length * 2);
     for (const s of map.structures) expect(map.terrain[s.cell]).not.toBe("sea");
     expect(map.territory.filter((t) => t === "gulls").length).toBeGreaterThanOrEqual(4);

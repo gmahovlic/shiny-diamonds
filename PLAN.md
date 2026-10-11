@@ -270,7 +270,7 @@ monsterous/
 | Terrenos (5) | **mar, areia, palmeiras, calçada, rua** (grama descartada pra manter 5 tipos) |
 | Territórios (2) | **gaivotas** e **caranguejos** (áreas contornadas no mapa) |
 | Estruturas (2 tipos) | **quiosques** e **barracas**, em 4 cores; a 4ª cor só no modo difícil |
-| Mapa | 12 × 9 = 108 hexes, gerado inteiro (sem peças); gerador cria biomas em blocos pra parecer praia |
+| Mapa | 12 × 9 = 108 hexes, gerado inteiro (sem peças). Terrenos balanceados (16–28 células cada) em várias manchas espalhadas (≥2 por terreno, ≥13 no total), estilo tabuleiro misto. O diamante nunca fica num hex com estrutura. |
 | Pistas | Mesmas famílias do original, com texto próprio: a até N de terreno X / de território / de tipo de estrutura / de cor de estrutura; "em A ou B"; negativas no modo difícil |
 | Identidade visual | Paleta solar (azul-mar, areia, verde-palmeira, cinza-calçada, asfalto), tipografia arredondada, peças = diamantes/conchas |
 

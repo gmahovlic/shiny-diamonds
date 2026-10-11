@@ -46,9 +46,12 @@ export function generate(seed: number, clueCount: number, hard: boolean): Puzzle
   const map = generateMap(rng, hard);
   const catalog = clueCatalog(hard);
   const masks = catalog.map((c) => clueMask(c, map));
+  const occupied = new Set(map.structures.map((s) => s.cell));
 
   for (let attempt = 0; attempt < CLUE_SET_ATTEMPTS; attempt++) {
     const target: Cell = rng.int(CELLS);
+    // The diamond is never under a kiosk or umbrella.
+    if (occupied.has(target)) continue;
     const passing: number[] = [];
     for (let i = 0; i < catalog.length; i++) if ((masks[i] as boolean[])[target]) passing.push(i);
     if (passing.length < clueCount) continue;

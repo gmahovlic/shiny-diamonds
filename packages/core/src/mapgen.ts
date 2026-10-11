@@ -10,39 +10,98 @@ import {
   type Territory,
 } from "./types";
 
-const TERRAIN_SEEDS = 11;
-const MIN_TERRAIN_CELLS = 10;
+/** Seeds per terrain: more seeds → more, smaller patches, like a mixed-tile board. */
+const SEEDS_PER_TERRAIN = 4;
+/** Any two seeds are at least this far apart; two seeds of the same terrain much farther. */
+const MIN_SEED_GAP = 2;
+const MIN_SAME_SEED_GAP = 5;
+/** Balance: every terrain ends up with between MIN and MAX of the 108 cells (mean is 21.6). */
+const MIN_TERRAIN_CELLS = 16;
+const MAX_TERRAIN_CELLS = 28;
+/** Mixing: every terrain in at least MIN_PATCHES separate patches, MIN_TOTAL_PATCHES overall. */
+const MIN_PATCHES = 2;
+const MIN_TOTAL_PATCHES = 13;
+/** How often growth favours the terrain with the fewest cells (keeps counts balanced). */
+const BALANCE_BIAS = 0.7;
 const MIN_STRUCTURE_GAP = 2;
 const TERRITORY_BLOBS: Record<Territory, number> = { gulls: 2, crabs: 2 };
 
 /**
- * Terrain as organic blobs: a few seed cells per terrain, then a random-priority flood fill
- * so regions grow irregularly instead of as clean Voronoi cells.
+ * Terrain as many small organic patches: seeds spread across the board (same-terrain seeds
+ * far apart), then a flood fill that usually grows the terrain with the fewest cells so the
+ * five types stay balanced instead of one sea swallowing the map.
  */
 function growTerrain(rng: Rng): Terrain[] | null {
   const terrain = new Array<Terrain | null>(CELLS).fill(null);
-  const seeds: Terrain[] = [];
-  for (let i = 0; i < TERRAIN_SEEDS; i++) seeds.push(TERRAINS[i % TERRAINS.length] as Terrain);
-  rng.shuffle(seeds);
+  const counts = new Map<Terrain, number>(TERRAINS.map((t) => [t, 0]));
 
-  const frontier: { cell: Cell; t: Terrain }[] = [];
-  for (const cell of rng.shuffle(allCells()).slice(0, seeds.length)) {
-    frontier.push({ cell, t: seeds.pop() as Terrain });
+  const seeds: { cell: Cell; t: Terrain }[] = [];
+  const order: Terrain[] = [];
+  for (let i = 0; i < SEEDS_PER_TERRAIN; i++) order.push(...rng.shuffle([...TERRAINS]));
+  for (const t of order) {
+    const options = allCells().filter((c) =>
+      seeds.every((s) => distance(s.cell, c) >= (s.t === t ? MIN_SAME_SEED_GAP : MIN_SEED_GAP)),
+    );
+    if (options.length === 0) return null;
+    seeds.push({ cell: rng.pick(options), t });
   }
-  while (frontier.length > 0) {
-    const i = rng.int(frontier.length);
-    const { cell, t } = frontier[i] as { cell: Cell; t: Terrain };
-    frontier[i] = frontier[frontier.length - 1] as { cell: Cell; t: Terrain };
-    frontier.pop();
+
+  const frontier = new Map<Terrain, Cell[]>(TERRAINS.map((t) => [t, []]));
+  for (const s of seeds) (frontier.get(s.t) as Cell[]).push(s.cell);
+  for (;;) {
+    const available = TERRAINS.filter((t) => (frontier.get(t) as Cell[]).length > 0);
+    if (available.length === 0) break;
+    let t: Terrain;
+    if (rng.next() < BALANCE_BIAS) {
+      const min = Math.min(...available.map((a) => counts.get(a) as number));
+      t = rng.pick(available.filter((a) => counts.get(a) === min));
+    } else {
+      t = rng.pick(available);
+    }
+    const f = frontier.get(t) as Cell[];
+    const i = rng.int(f.length);
+    const cell = f[i] as Cell;
+    f[i] = f[f.length - 1] as Cell;
+    f.pop();
     if (terrain[cell] !== null) continue;
     terrain[cell] = t;
-    for (const n of neighbors(cell)) if (terrain[n] === null) frontier.push({ cell: n, t });
+    counts.set(t, (counts.get(t) as number) + 1);
+    for (const n of neighbors(cell)) if (terrain[n] === null) f.push(n);
   }
+  if (terrain.includes(null)) return null;
 
-  const counts = new Map<Terrain, number>();
-  for (const t of terrain) counts.set(t as Terrain, (counts.get(t as Terrain) ?? 0) + 1);
-  for (const t of TERRAINS) if ((counts.get(t) ?? 0) < MIN_TERRAIN_CELLS) return null;
+  let totalPatches = 0;
+  for (const t of TERRAINS) {
+    const n = counts.get(t) as number;
+    if (n < MIN_TERRAIN_CELLS || n > MAX_TERRAIN_CELLS) return null;
+    const patches = patchCount(terrain as Terrain[], t);
+    if (patches < MIN_PATCHES) return null;
+    totalPatches += patches;
+  }
+  if (totalPatches < MIN_TOTAL_PATCHES) return null;
   return terrain as Terrain[];
+}
+
+/** Number of connected patches of a terrain. */
+export function patchCount(terrain: readonly Terrain[], t: Terrain): number {
+  const seen = new Set<Cell>();
+  let patches = 0;
+  for (let c = 0; c < CELLS; c++) {
+    if (terrain[c] !== t || seen.has(c)) continue;
+    patches++;
+    const stack = [c];
+    seen.add(c);
+    while (stack.length > 0) {
+      const cur = stack.pop() as Cell;
+      for (const n of neighbors(cur)) {
+        if (terrain[n] === t && !seen.has(n)) {
+          seen.add(n);
+          stack.push(n);
+        }
+      }
+    }
+  }
+  return patches;
 }
 
 /** Small connected blobs (2–3 cells) per territory, never touching another blob. */
@@ -98,7 +157,7 @@ function placeStructures(
 }
 
 export function generateMap(rng: Rng, hard: boolean): BeachMap {
-  for (let attempt = 0; attempt < 200; attempt++) {
+  for (let attempt = 0; attempt < 500; attempt++) {
     const terrain = growTerrain(rng);
     if (!terrain) continue;
     const territory = placeTerritories(rng);
