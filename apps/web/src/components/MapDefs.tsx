@@ -43,8 +43,8 @@ export function MapDefs() {
       </pattern>
       {/* Calçadão: ondas de Copacabana */}
       <pattern id="p-boardwalk" width="28" height="14" patternUnits="userSpaceOnUse">
-        <rect width="28" height="14" fill="#f5f2ea" />
-        <path d="M0 4 Q7 -2 14 4 T28 4 L28 10 Q21 16 14 10 T0 10 Z" fill="#1d1d1f" />
+        <rect width="28" height="14" fill="#e6e2d8" />
+        <path d="M0 4 Q7 -2 14 4 T28 4 L28 10 Q21 16 14 10 T0 10 Z" fill="#8a8a85" />
       </pattern>
       {/* Rua: asfalto com faixa */}
       <pattern id="p-street" width="18" height="18" patternUnits="userSpaceOnUse">
