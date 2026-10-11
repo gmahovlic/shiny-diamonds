@@ -253,7 +253,9 @@ monsterous/
    1 solução").
 2. **Server** ✅ — DO de sala, protocolo, join/reconnect, ciclo de partida, bots por alarm,
    alarm de limpeza (6 h ocioso), deploy automático da `main`.
-3. **Web** — lobby (criar/entrar/QR), tela do jogador, tela da TV, responsivo, i18n.
+3. **Web** ✅ — lobby (criar/entrar/QR), tela do jogador (mapa SVG interativo, pista,
+   perguntar/procurar, cubos, anotações, dedução assistida), tela da TV, reveal,
+   reconexão, animações, PWA básico. ~25 KB gzip de JS. i18n fica pra fase 4.
 4. **Polish** — arte própria, PWA, sons, dificuldades, analytics, teste em TV de verdade.
 5. **Depois** — contas (D1), ads, remover ads (Stripe), stats.
 

@@ -15,6 +15,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint && pnpm typecheck && pnpm test
+      - run: pnpm --filter @shiny/web build
       - name: Deploy worker
         run: pnpm --filter @shiny/server run deploy
         env:

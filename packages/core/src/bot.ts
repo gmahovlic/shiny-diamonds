@@ -82,24 +82,28 @@ function argmax<T>(items: readonly T[], score: (t: T) => number, rng: Rng): T {
   return rng.pick(best);
 }
 
-/** Choose the bot's next action for `seat`. Assumes it is this seat's move. */
-export function botAction(state: GameState, seat: number, ctx: BotContext, rng: Rng): Action {
+/** What the assist needs from the board: everything public. */
+export interface PublicBoard {
+  seats: number;
+  markers: readonly Marker[];
+}
+
+export interface Analysis {
+  /** Cells that can still be the diamond given my clue and everyone's public markers. */
+  possible: Cell[];
+  /** Cells every remaining hypothesis of every opponent accepts (safe to search). */
+  certain: Cell[];
+  /** Per cell, product over opponents of the fraction of their hypotheses accepting it. */
+  likelihood: number[];
+  /** Remaining hypotheses (clue-set masks) per opponent seat. */
+  oppHyps: Map<number, Mask[]>;
+  opponents: number[];
+}
+
+/** Deduce what the public board says, from `seat`'s point of view. Also powers the assist UI. */
+export function analyze(state: PublicBoard, seat: number, ctx: BotContext): Analysis {
   const myMask = andMasks(ctx.myClues.map((c) => clueMask(c, ctx.map)));
   const hyps = hypotheses(ctx);
-  const mine = state.markers.filter((m) => m.seat === seat);
-
-  // Cube owed (setup or penalty): reject a cell, revealing as little as possible about my clue.
-  if (state.pendingCube === seat) {
-    const selfHyps = consistentWith(hyps, mine);
-    const options: Cell[] = [];
-    for (let c = 0; c < CELLS; c++) if (!myMask[c] && !hasMarker(mine, seat, c)) options.push(c);
-    return {
-      type: "placeCube",
-      seat,
-      cell: argmax(options, (c) => selfHyps.filter((h) => !h[c]).length + rng.next() * 0.01, rng),
-    };
-  }
-
   const opponents: number[] = [];
   for (let s = 0; s < state.seats; s++) if (s !== seat) opponents.push(s);
   const oppHyps = new Map<number, Mask[]>();
@@ -133,6 +137,28 @@ export function botAction(state: GameState, seat: number, ctx: BotContext, rng: 
     likelihood[c] = score;
     if (sure) certain.push(c);
   }
+  return { possible, certain, likelihood, oppHyps, opponents };
+}
+
+/** Choose the bot's next action for `seat`. Assumes it is this seat's move. */
+export function botAction(state: GameState, seat: number, ctx: BotContext, rng: Rng): Action {
+  const myMask = andMasks(ctx.myClues.map((c) => clueMask(c, ctx.map)));
+  const hyps = hypotheses(ctx);
+  const mine = state.markers.filter((m) => m.seat === seat);
+
+  // Cube owed (setup or penalty): reject a cell, revealing as little as possible about my clue.
+  if (state.pendingCube === seat) {
+    const selfHyps = consistentWith(hyps, mine);
+    const options: Cell[] = [];
+    for (let c = 0; c < CELLS; c++) if (!myMask[c] && !hasMarker(mine, seat, c)) options.push(c);
+    return {
+      type: "placeCube",
+      seat,
+      cell: argmax(options, (c) => selfHyps.filter((h) => !h[c]).length + rng.next() * 0.01, rng),
+    };
+  }
+
+  const { possible, certain, likelihood, oppHyps, opponents } = analyze(state, seat, ctx);
 
   const hasCube = (c: Cell) => state.markers.some((m) => m.cell === c && m.kind === "cube");
   const searchable = (c: Cell) => !hasCube(c);

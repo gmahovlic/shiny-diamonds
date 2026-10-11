@@ -14,6 +14,8 @@ pnpm lint        # biome
 pnpm typecheck
 pnpm gen-bank    # regenera o banco de seeds (packages/core/src/bank.json)
 pnpm --filter @shiny/server dev   # worker + Durable Object local em :8787
+pnpm --filter @shiny/web dev      # vite em :5173 com proxy de /api pro worker
+pnpm --filter @shiny/web build    # gera apps/web/dist, que o worker serve em produção
 ```
 
 Deploy: push na `main` roda lint/typecheck/test e faz `wrangler deploy` (secrets
@@ -23,6 +25,6 @@ Deploy: push na `main` roda lint/typecheck/test e faz `wrangler deploy` (secrets
 
 - `packages/core` — lógica do jogo em TS puro: grid hex, pistas, solver, gerador de mapa,
   gerador de puzzle (1 solução garantida), regras de turno, banco de seeds.
-- `apps/web` — (fase 3) Preact + Vite.
+- `apps/web` — Preact + Vite: home, lobby com QR, tela do jogador, tela da TV.
 - `apps/server` — Cloudflare Worker + 1 Durable Object por sala (WebSocket com hibernação,
   bots por alarm, sala pura e testável em `room.ts`).
