@@ -82,6 +82,10 @@ export function Home() {
         {t("home.create")}
       </button>
 
+      <div class="or">
+        <span>{t("home.or")}</span>
+      </div>
+
       <form class="join" onSubmit={join}>
         <input
           value={code}
@@ -92,19 +96,22 @@ export function Home() {
           autoCorrect="off"
           onInput={(e) => setCode((e.target as HTMLInputElement).value.toUpperCase())}
         />
-        <button type="submit" class="btn">
-          {t("home.join")}
-        </button>
+        <div class="row join-row">
+          <button type="submit" class="btn">
+            {t("home.join")}
+          </button>
+          <button
+            type="button"
+            class="btn"
+            disabled={code.length !== 4}
+            onClick={() => navigate(`/tv/${code.toUpperCase()}`)}
+          >
+            {t("home.tv")}
+          </button>
+        </div>
       </form>
 
-      <button
-        type="button"
-        class="btn ghost"
-        onClick={() => code.length === 4 && navigate(`/tv/${code.toUpperCase()}`)}
-      >
-        {t("home.tv")}
-      </button>
-      <p class="small">{t("home.players")}</p>
+      <p class="small center-text">{t("home.players")}</p>
     </main>
   );
 }

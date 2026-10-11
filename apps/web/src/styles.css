@@ -235,7 +235,36 @@ input::placeholder {
 }
 .join {
   display: flex;
+  flex-direction: column;
   gap: 10px;
+}
+.join-row {
+  margin: 0;
+  align-items: stretch;
+}
+.join-row .btn {
+  flex: 1;
+}
+.or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink-soft);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  margin: 6px 0;
+}
+.or::before,
+.or::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  background: var(--ink);
+  opacity: 0.25;
+}
+.center-text {
+  text-align: center;
 }
 .code-input {
   text-transform: uppercase;
