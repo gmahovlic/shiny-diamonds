@@ -3,7 +3,7 @@
   "short_name": "Shiny",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b2a3b",
-  "theme_color": "#0b2a3b",
+  "background_color": "#ffe9b8",
+  "theme_color": "#ffd27a",
   "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
 }
