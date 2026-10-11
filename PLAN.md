@@ -142,6 +142,11 @@ Vários displays por sala são permitidos.
 host dá start → DO sorteia seed, manda estado público pra todos e a pista privada pra cada
 jogador → rodadas (perguntar / procurar) → DO revela → placar → nova partida mesma sala.
 
+**Respostas automáticas:** como o DO conhece todas as pistas, ele responde sozinho
+("perguntar" e "procurar" resolvem na hora, sem esperar o outro jogador clicar). Zero
+espera, zero erro honesto, e o reducer de regras (`packages/core/game.ts`) recebe só um
+`oracle(seat, cell)`.
+
 **Protocolo:** JSON, mensagens tipadas em `packages/core/protocol.ts` compartilhadas
 entre cliente e servidor (sem gerar código, só tipos).
 
@@ -222,9 +227,10 @@ monsterous/
 
 ## 6. Roadmap
 
-0. **Setup** — monorepo, lint/format, Vitest, Actions com deploy pra CF.
-1. **Core** — grid, terrenos, estruturas, pistas, solver, gerador, banco de seeds,
-   testes (incluindo "todo seed do banco tem exatamente 1 solução").
+0. **Setup** ✅ — monorepo, lint/format, Vitest, Actions com deploy pra CF.
+1. **Core** ✅ — grid, terrenos, estruturas, pistas, solver, gerador, banco de seeds,
+   regras de turno (reducer puro), testes (incluindo "todo seed do banco tem exatamente
+   1 solução").
 2. **Server** — DO de sala, protocolo, join/reconnect, ciclo de partida, alarm de limpeza.
 3. **Web** — lobby (criar/entrar/QR), tela do jogador, tela da TV, responsivo, i18n.
 4. **Polish** — arte própria, PWA, sons, dificuldades, analytics, teste em TV de verdade.
