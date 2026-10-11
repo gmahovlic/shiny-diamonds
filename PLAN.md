@@ -238,3 +238,22 @@ monsterous/
 - Modo difícil com pistas negativas desde o começo ou depois.
 - Identidade visual (tema, paleta) — influencia o SVG desde o primeiro commit.
 - `partyserver` vs DO cru.
+
+---
+
+## 8. Setup fora do código (checklist)
+
+**Antes do primeiro deploy (fase 2):**
+- [ ] Conta Cloudflare (free, sem cartão) + ativar subdomínio `*.workers.dev`.
+- [ ] Anotar o Account ID.
+- [ ] API Token com template "Edit Cloudflare Workers".
+- [ ] Secrets no GitHub Actions: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
+
+**Máquina local:** Node 20+, pnpm (`corepack enable`), `wrangler login` (opcional).
+
+**Opcional / depois:** domínio próprio (Cloudflare Registrar), Cloudflare Web
+Analytics (token no index), Sentry.
+
+**Antes de começar o `core` (fase 1):** responder as decisões da seção 7 — faixa de
+jogadores, tamanho do mapa / nº de terrenos e estruturas, tema visual. O core é TS
+puro e não depende de nada da Cloudflare.
