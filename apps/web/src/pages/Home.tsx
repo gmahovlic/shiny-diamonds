@@ -37,12 +37,17 @@ export function Home() {
     }
   };
 
-  const join = (e: Event) => {
-    e.preventDefault();
+  const join = (role: "p" | "tv") => {
     const c = code.trim().toUpperCase();
     if (c.length !== 4) return showToast(t("home.codeLen"));
     keepName();
-    navigate(`/p/${c}`);
+    navigate(`/${role}/${c}`);
+  };
+
+  /** Enter / "done" on the keyboard only dismisses it: the two buttons decide the role. */
+  const onSubmit = (e: Event) => {
+    e.preventDefault();
+    (document.activeElement as HTMLElement | null)?.blur();
   };
 
   return (
@@ -86,7 +91,7 @@ export function Home() {
         <span>{t("home.or")}</span>
       </div>
 
-      <form class="join" onSubmit={join}>
+      <form class="join" onSubmit={onSubmit}>
         <input
           value={code}
           maxLength={4}
@@ -97,15 +102,10 @@ export function Home() {
           onInput={(e) => setCode((e.target as HTMLInputElement).value.toUpperCase())}
         />
         <div class="row join-row">
-          <button type="submit" class="btn">
+          <button type="button" class="btn" disabled={code.length !== 4} onClick={() => join("p")}>
             {t("home.join")}
           </button>
-          <button
-            type="button"
-            class="btn"
-            disabled={code.length !== 4}
-            onClick={() => navigate(`/tv/${code.toUpperCase()}`)}
-          >
+          <button type="button" class="btn" disabled={code.length !== 4} onClick={() => join("tv")}>
             {t("home.tv")}
           </button>
         </div>
